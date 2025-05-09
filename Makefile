@@ -22,8 +22,14 @@ CYAN = \033[0;36m
 # ---- # Vars # ---- #
 COPY = cp -rf
 PRINT = echo
+DOCKER = docker
+
+MARIADB = mariadb
 
 SHARED_DIR = ../shared
+SRCS = srcs/
+REQS = $(SRCS)requirements/
+MARIADB_DIR = $(REQS)mariadb/
 
 # ------------------ #
 
@@ -36,12 +42,51 @@ copy:
 	@$(COPY) * $(SHARED_DIR)
 	@$(PRINT) "$(GREEN)Files copied$(RESET)"
 
+list:
+	@$(PRINT) "$(CYAN)Printing all docker $(YELLOW)containers$(CYAN):$(RESET)"
+	@$(DOCKER) ps -a
+	@$(PRINT) "$(CYAN)Printing all docker $(YELLOW)images$(CYAN):$(RESET)"
+	@$(DOCKER) images -a
+
+bldmariadb:
+	@$(PRINT) "$(PINK)Building $(WHITE_BOLD)$(MARIADB)$(PINK) image...$(RESET)"
+	@$(DOCKER) build -t $(MARIADB) $(MARIADB_DIR)
+
+runmariadb:
+	@$(PRINT) "$(PINK)Running $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
+	@$(DOCKER) run -d --name $(MARIADB) $(MARIADB)
+
+dplmariadb: bldmariadb runmariadb
+	@$(PRINT) "$(PINK)The $(WHITE_BOLD)mariadb$(PINK) container deployed successfully$(RESET)"
+
+excmariadb:
+	@$(PRINT) "$(PINK)Interacting with $(WHITE_BOLD)mariadb$(PINK) container with a $(WHITE_BOLD)bash$(PINK) shell...$(RESET)"
+	@$(DOCKER) exec -it $$(docker ps -aq --filter="name=$(MARIADB)") bash
+
+stpmariadb:
+	@$(PRINT) "$(PINK)Stopping $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
+	@$(DOCKER) stop $$(docker ps -aq --filter="name=$(MARIADB)")
+
+clnmariadb: stpmariadb
+	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
+	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(MARIADB)")
+
+fclean:
+	@$(PRINT) "$(PINK)Cleaning unused containers and images...$(RESET)"
+	@$(DOCKER) system prune
+
 # ------------------ #
 
 # --- # Extras # --- #
--include $(DEPS)
-
-.PHONY:
+.PHONY: all \
+		copy \
+		bldmariadb \
+		runmariadb \
+		dplmariadb \
+		excmariadb \
+		stpmariadb \
+		clnmariadb \
+		fclean
 
 .SILENT:
 # ------------------ #
