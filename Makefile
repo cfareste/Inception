@@ -57,7 +57,7 @@ runmariadb:
 	@$(DOCKER) run -d --name $(MARIADB) $(MARIADB)
 
 dplmariadb: bldmariadb runmariadb
-	@$(PRINT) "$(PINK)The $(WHITE_BOLD)mariadb$(PINK) container deployed successfully$(RESET)"
+	@$(PRINT) "$(GREEN)The $(WHITE_BOLD)mariadb$(GREEN) container deployed successfully$(RESET)"
 
 excmariadb:
 	@$(PRINT) "$(PINK)Interacting with $(WHITE_BOLD)mariadb$(PINK) container with a $(WHITE_BOLD)bash$(PINK) shell...$(RESET)"
@@ -71,9 +71,13 @@ clnmariadb: stpmariadb
 	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
 	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(MARIADB)")
 
-fclean:
-	@$(PRINT) "$(PINK)Cleaning unused containers and images...$(RESET)"
-	@$(DOCKER) system prune
+clean: clnmariadb
+	@$(PRINT) "$(PINK)Application containers $(GREEN)removed$(PINK).$(RESET)"
+
+fclean: clean
+	@$(PRINT) "$(PINK)Removing cache...$(RESET)"
+	@$(DOCKER) system prune -fa
+	@$(PRINT) "$(GREEN)Cache removed successfully$(RESET)"
 
 # ------------------ #
 
@@ -86,6 +90,7 @@ fclean:
 		excmariadb \
 		stpmariadb \
 		clnmariadb \
+		clean \
 		fclean
 
 .SILENT:
