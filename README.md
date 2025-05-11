@@ -166,6 +166,8 @@ mariadbd
 5. Now doesn't work because mariadb-secure-installation expects a tty and not a heredoc. So we need to do the operations manually: <br/>
 https://stackoverflow.com/questions/24270733/automate-mysql-secure-installation-with-echo-command-via-a-shell-script <br/>
 and going to mariadb container and doing cat /usr/bin/mariadb-secure-installation, copying the queries <br/>
+https://mariadb.com/kb/en/authentication-plugin-unix-socket/ <br/>
+As the unix_socket is now enabled by default, there is no need to enable it again <br/>
 Final result:
 ~~~
 intialize_service()
@@ -176,9 +178,6 @@ intialize_service()
 
 install_secure_policies()
 {
-    # Set the root new password
-    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$MARIADB_ROOT_PASSWORD');"
-
     # Remove anonymous users
     mariadb -e "DELETE FROM mysql.user WHERE User='';"
     
@@ -294,9 +293,6 @@ intialize_service()
 
 install_secure_policies()
 {
-    # Set the root new password
-    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$DATABASE_ROOT_PASSWORD');"
-
     # Remove anonymous users
     mariadb -e "DELETE FROM mysql.user WHERE User='';"
     
@@ -327,3 +323,7 @@ service mariadb stop
 mariadbd
 ~~~
 
+
+# TIPS
+1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
+even if you rebuild

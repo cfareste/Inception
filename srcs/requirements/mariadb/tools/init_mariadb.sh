@@ -6,9 +6,6 @@ intialize_service()
 
 install_secure_policies()
 {
-    # Set the root new password
-    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$DATABASE_ROOT_PASSWORD');"
-
     # Remove anonymous users
     mariadb -e "DELETE FROM mysql.user WHERE User='';"
     

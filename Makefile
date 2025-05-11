@@ -66,6 +66,7 @@ down:
 fdown:
 	@$(PRINT) "$(BLUE)Stopping and removing application $(WHITE_BOLD)containers$(BLUE) and $(WHITE_BOLD)volumes$(BLUE)...$(RESET)"
 	@$(DOCKER) compose -f $(YAML) down -v
+	@$(RMV) $(VOLUMES_PATH)
 
 logmariadb:
 	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(MARIADB)$(PINK) logs...$(RESET)"
