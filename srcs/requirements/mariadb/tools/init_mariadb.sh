@@ -7,7 +7,7 @@ intialize_service()
 install_secure_policies()
 {
     # Set the root new password
-    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$MARIADB_ROOT_PASSWORD');"
+    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$DATABASE_ROOT_PASSWORD');"
 
     # Remove anonymous users
     mariadb -e "DELETE FROM mysql.user WHERE User='';"
@@ -23,8 +23,17 @@ install_secure_policies()
     mariadb -e "FLUSH PRIVILEGES;"
 }
 
+initial_transaction()
+{
+    mariadb -e "CREATE DATABASE IF NOT EXISTS $DATABASE_NAME;"
+    mariadb -e "CREATE USER IF NOT EXISTS '$DATABASE_USER_NAME'@'%' IDENTIFIED BY '$DATABASE_USER_PASSWORD';"
+    mariadb -e "GRANT ALL ON $DATABASE_NAME.* TO '$DATABASE_USER_NAME'@'%';"
+    mariadb -e "FLUSH PRIVILEGES;"
+}
+
 intialize_service
 install_secure_policies
+initial_transaction
 service mariadb stop
 
 mariadbd

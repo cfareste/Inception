@@ -255,3 +255,75 @@ volumes:
       device: ${VOLUMES_PATH}database
       o: bind
 ~~~
+
+
+## Creating initial queries
+As wordpress will connect to create the necessary tables, should we create the database or its created by default?: YES <br/>
+https://wpdataaccess.com/docs/remote-databases/mysql-mariadb/ <br/>
+https://www.sitepoint.com/community/t/how-does-wordpress-automatically-create-a-database-on-installation/112298 <br/>
+
+Steps:
+1. Create database: https://mariadb.com/kb/en/create-database/ <br/>
+2. Create user to handle the database: <br/>
+https://mariadb.com/kb/en/create-user/ <br/>
+https://stackoverflow.com/questions/12931991/mysql-what-does-stand-for-in-host-column-and-how-to-change-users-password <br/>
+3. Grant privileges on the database: https://mariadb.com/kb/en/grant/ <br/>
+4. Refresh
+~~~
+initial_transaction()
+{
+    mariadb -e "CREATE DATABASE IF NOT EXISTS $DATABASE_NAME;"
+    mariadb -e "CREATE USER IF NOT EXISTS '$DATABASE_USER_NAME'@'%' IDENTIFIED BY '$DATABASE_USER_PASSWORD';"
+    mariadb -e "GRANT ALL ON $DATABASE_NAME.* TO '$DATABASE_USER_NAME'@'%';"
+    mariadb -e "FLUSH PRIVILEGES;"
+}
+
+intialize_service
+install_secure_policies
+initial_transaction
+service mariadb stop
+~~~
+
+Final init_mariadb.sh result:
+~~~
+intialize_service()
+{
+    service mariadb start
+    sleep 1
+}
+
+install_secure_policies()
+{
+    # Set the root new password
+    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$DATABASE_ROOT_PASSWORD');"
+
+    # Remove anonymous users
+    mariadb -e "DELETE FROM mysql.user WHERE User='';"
+    
+    # Disallow remote root login
+    mariadb -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+    
+    # Remove test database and privileges on this database
+    mariadb -e "DROP DATABASE IF EXISTS test;"
+    mariadb -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
+
+    # Reload privilege tables
+    mariadb -e "FLUSH PRIVILEGES;"
+}
+
+initial_transaction()
+{
+    mariadb -e "CREATE DATABASE IF NOT EXISTS $DATABASE_NAME;"
+    mariadb -e "CREATE USER IF NOT EXISTS '$DATABASE_USER_NAME'@'%' IDENTIFIED BY '$DATABASE_USER_PASSWORD';"
+    mariadb -e "GRANT ALL ON $DATABASE_NAME.* TO '$DATABASE_USER_NAME'@'%';"
+    mariadb -e "FLUSH PRIVILEGES;"
+}
+
+intialize_service
+install_secure_policies
+initial_transaction
+service mariadb stop
+
+mariadbd
+~~~
+
