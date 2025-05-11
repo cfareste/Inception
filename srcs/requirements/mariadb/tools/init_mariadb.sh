@@ -1,3 +1,5 @@
+#! /bin/bash
+
 intialize_service()
 {
     service mariadb start

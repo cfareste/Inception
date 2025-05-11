@@ -13,4 +13,4 @@ RUN mkdir -p /run/mysqld && \
 
 EXPOSE 3306
 
-ENTRYPOINT [ "bash", "/root/init_mariadb.sh" ]
+ENTRYPOINT [ "/root/init_mariadb.sh" ]
