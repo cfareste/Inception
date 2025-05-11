@@ -131,7 +131,7 @@ install_secure_policies()
 install_secure_policies
 mariadbd
 ~~~
-2. Copying it to eh /root folder
+2. Copying it to the /root folder
 ~~~
 FROM debian:bullseye
 
@@ -152,7 +152,7 @@ ENTRYPOINT [ "/root/init_mariadb.sh" ]
 ~~~
 COPY --chmod=700 ./tools/init_mariadb.sh /root
 ~~~
-4. Doesn't work because it cannot establish connection, as the socket is not initialized. To do so, we need to enable the service:
+4. Doesn't work because it cannot establish connection, as the socket is not initialized. To do so, we need to enable the service: <br/>
 https://discourse.ubuntu.com/t/mariadb-error-2002-hy000-cant-connect-to-local-server-through-socket-run-mysqld-mysqld-sock-2/53941 <br/>
 https://discourse.ubuntu.com/t/mariadb-error-2002-hy000-cant-connect-to-local-server-through-socket-run-mysqld-mysqld-sock-2/53941
 ~~~
@@ -163,10 +163,10 @@ install_secure_policies
 service mariadb stop
 mariadbd
 ~~~
-5. Now doesn't work because mariadb-secure-installation expects a tty and not a heredoc. So we need to do the operations manually:
+5. Now doesn't work because mariadb-secure-installation expects a tty and not a heredoc. So we need to do the operations manually: <br/>
 https://stackoverflow.com/questions/24270733/automate-mysql-secure-installation-with-echo-command-via-a-shell-script <br/>
 and going to mariadb container and doing cat /usr/bin/mariadb-secure-installation, copying the queries <br/>
-final result:
+Final result:
 ~~~
 intialize_service()
 {
@@ -199,4 +199,13 @@ service mariadb stop
 
 mariadbd
 ~~~
+
+# Create a simple compose file with only mariadb
+https://docs.docker.com/reference/compose-file/ <br/>
+https://docs.docker.com/reference/compose-file/services/ <br/>
+https://docs.docker.com/reference/compose-file/build/ <br/>
+https://docs.docker.com/reference/compose-file/volumes/ <br/>
+https://docs.docker.com/engine/extend/legacy_plugins/ <br/>
+https://docs.docker.com/reference/compose-file/networks/ <br/>
+https://docs.docker.com/reference/compose-file/secrets/
 

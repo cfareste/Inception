@@ -21,6 +21,8 @@ CYAN = \033[0;36m
 
 # ---- # Vars # ---- #
 COPY = cp -rf
+RMV = rm -rf
+MKDIR = mkdir -p
 PRINT = echo
 DOCKER = docker
 
@@ -30,6 +32,9 @@ SHARED_DIR = ../shared
 SRCS = srcs/
 REQS = $(SRCS)requirements/
 MARIADB_DIR = $(REQS)mariadb/
+YAML = ./srcs/docker-compose.yml
+VOLUMES_PATH = ./data/
+DATABASE_VOLUME = $(VOLUMES_PATH)database/
 
 # ------------------ #
 
@@ -47,6 +52,20 @@ list:
 	@$(DOCKER) ps -a
 	@$(PRINT) "$(CYAN)Printing all docker $(YELLOW)images$(CYAN):$(RESET)"
 	@$(DOCKER) images -a
+
+up:
+	@$(PRINT) "$(BLUE)Creating $(WHITE_BOLD)volumes$(BLUE) directories...$(RESET)"
+	@$(MKDIR) $(VOLUMES_PATH) $(DATABASE_VOLUME)
+	@$(PRINT) "$(BLUE)Deploying $(WHITE_BOLD)application$(BLUE)...$(RESET)"
+	@$(DOCKER) compose -f $(YAML) up -d --build
+
+down:
+	@$(PRINT) "$(BLUE)Stopping and removing application $(WHITE_BOLD)containers$(BLUE)...$(RESET)"
+	@$(DOCKER) compose -f $(YAML) down
+
+fdown:
+	@$(PRINT) "$(BLUE)Stopping and removing application $(WHITE_BOLD)containers$(BLUE) and $(WHITE_BOLD)volumes$(BLUE)...$(RESET)"
+	@$(DOCKER) compose -f $(YAML) down -v
 
 logmariadb:
 	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(MARIADB)$(PINK) logs...$(RESET)"
@@ -75,12 +94,13 @@ clnmariadb: stpmariadb
 	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
 	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(MARIADB)")
 
-clean: clnmariadb
-	@$(PRINT) "$(PINK)Application containers $(GREEN)removed$(PINK).$(RESET)"
+clean: down
+	@$(PRINT) "$(PINK)Application $(GREEN)removed$(PINK).$(RESET)"
 
-fclean: clean
-	@$(PRINT) "$(PINK)Removing cache...$(RESET)"
+fclean: fdown
+	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)cache$(PINK)...$(RESET)"
 	@$(DOCKER) system prune -fa
+	@$(RMV) $(VOLUMES_PATH)
 	@$(PRINT) "$(GREEN)Cache removed successfully$(RESET)"
 
 # ------------------ #
@@ -88,6 +108,9 @@ fclean: clean
 # --- # Extras # --- #
 .PHONY: all \
 		copy \
+		up \
+		down \
+		fdown \
 		bldmariadb \
 		runmariadb \
 		dplmariadb \
