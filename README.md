@@ -72,7 +72,6 @@ RUN mkdir -p /run/mysqld && \
     chown mysql:mysql /run/mysqld && \
     chmod 777 /run/mysqld
 
-
 ENTRYPOINT [ "mariadbd" ]
 ~~~
 
@@ -108,3 +107,96 @@ https://serverfault.com/questions/1015287/is-mysql-install-db-needed-to-install-
 But mariadb-secure-installation it's still recommended as it's for security concerns, so: <br/>
 https://mariadb.com/kb/en/mariadb-secure-installation/ <br/>
 https://mariadb.org/authentication-in-mariadb-10-4/
+
+
+## Creating the script init_mariadb.sh
+### Mariadb secure installation
+1. Install the secure policies:
+~~~
+install_secure_policies()
+{
+	mariadb-secure-installation <<- _EOF_
+
+		y
+		y
+		$MARIADB_ROOT_PASSWORD
+		$MARIADB_ROOT_PASSWORD
+		y
+		y
+		y
+		y
+	_EOF_
+}
+
+install_secure_policies
+mariadbd
+~~~
+2. Copying it to eh /root folder
+~~~
+FROM debian:bullseye
+
+RUN apt update \
+    && apt install -y --no-install-recommends mariadb-server
+
+COPY ./conf/mariadb.conf /etc/mysql/mariadb.conf.d/50-server.cnf
+
+COPY ./tools/init_mariadb.sh /root
+
+RUN mkdir -p /run/mysqld && \
+    chown mysql:mysql /run/mysqld && \
+    chmod 777 /run/mysqld
+
+ENTRYPOINT [ "/root/init_mariadb.sh" ]
+~~~
+3. Can't execute the container due to permission denied (missing execution permissions)
+~~~
+COPY --chmod=700 ./tools/init_mariadb.sh /root
+~~~
+4. Doesn't work because it cannot establish connection, as the socket is not initialized. To do so, we need to enable the service:
+https://discourse.ubuntu.com/t/mariadb-error-2002-hy000-cant-connect-to-local-server-through-socket-run-mysqld-mysqld-sock-2/53941 <br/>
+https://discourse.ubuntu.com/t/mariadb-error-2002-hy000-cant-connect-to-local-server-through-socket-run-mysqld-mysqld-sock-2/53941
+~~~
+[...]
+
+service mariadb start
+install_secure_policies
+service mariadb stop
+mariadbd
+~~~
+5. Now doesn't work because mariadb-secure-installation expects a tty and not a heredoc. So we need to do the operations manually:
+https://stackoverflow.com/questions/24270733/automate-mysql-secure-installation-with-echo-command-via-a-shell-script <br/>
+and going to mariadb container and doing cat /usr/bin/mariadb-secure-installation, copying the queries <br/>
+final result:
+~~~
+intialize_service()
+{
+    service mariadb start
+    sleep 1
+}
+
+install_secure_policies()
+{
+    # Set the root new password
+    mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$MARIADB_ROOT_PASSWORD');"
+
+    # Remove anonymous users
+    mariadb -e "DELETE FROM mysql.user WHERE User='';"
+    
+    # Disallow remote root login
+    mariadb -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+    
+    # Remove test database and privileges on this database
+    mariadb -e "DROP DATABASE IF EXISTS test;"
+    mariadb -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
+
+    # Reload privilege tables
+    mariadb -e "FLUSH PRIVILEGES;"
+}
+
+intialize_service
+install_secure_policies
+service mariadb stop
+
+mariadbd
+~~~
+

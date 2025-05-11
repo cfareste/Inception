@@ -48,6 +48,10 @@ list:
 	@$(PRINT) "$(CYAN)Printing all docker $(YELLOW)images$(CYAN):$(RESET)"
 	@$(DOCKER) images -a
 
+logmariadb:
+	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(MARIADB)$(PINK) logs...$(RESET)"
+	@$(DOCKER) logs $(MARIADB)
+
 bldmariadb:
 	@$(PRINT) "$(PINK)Building $(WHITE_BOLD)$(MARIADB)$(PINK) image...$(RESET)"
 	@$(DOCKER) build -t $(MARIADB) $(MARIADB_DIR)
