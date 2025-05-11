@@ -209,3 +209,49 @@ https://docs.docker.com/engine/extend/legacy_plugins/ <br/>
 https://docs.docker.com/reference/compose-file/networks/ <br/>
 https://docs.docker.com/reference/compose-file/secrets/
 
+## Creating wordpress database volume
+Having this simple docker-compose.yml: 
+~~~
+name: inception
+
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    restart: always
+
+~~~
+We need to create the database volume. 
+~~~
+volumes:
+  database:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${VOLUMES_PATH}database
+      o: bind
+~~~
+https://stackoverflow.com/questions/74079078/what-is-the-meaning-of-the-type-o-device-flags-in-driver-opts-in-the-docker-comp <br/>
+https://stackoverflow.com/questions/71660515/docker-compose-how-to-remove-bind-mount-data <br/>
+https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/
+
+Final result:
+~~~
+name: inception
+
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    volumes:
+      - database:/var/lib/mysql
+    restart: always
+
+volumes:
+  database:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${VOLUMES_PATH}database
+      o: bind
+~~~

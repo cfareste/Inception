@@ -3,3 +3,6 @@
 
 # Docker secrets
 secrets/
+
+# Volumes
+data/
