@@ -113,6 +113,8 @@ https://mariadb.org/authentication-in-mariadb-10-4/
 ### Mariadb secure installation
 1. Install the secure policies:
 ~~~
+#! /bin/bash
+
 install_secure_policies()
 {
 	mariadb-secure-installation <<- _EOF_
@@ -170,6 +172,8 @@ https://mariadb.com/kb/en/authentication-plugin-unix-socket/ <br/>
 As the unix_socket is now enabled by default, there is no need to enable it again <br/>
 Final result:
 ~~~
+#! /bin/bash
+
 intialize_service()
 {
     service mariadb start
@@ -269,6 +273,8 @@ https://stackoverflow.com/questions/12931991/mysql-what-does-stand-for-in-host-c
 3. Grant privileges on the database: https://mariadb.com/kb/en/grant/ <br/>
 4. Refresh
 ~~~
+[...]
+
 initial_transaction()
 {
     mariadb -e "CREATE DATABASE IF NOT EXISTS $DATABASE_NAME;"
@@ -285,6 +291,8 @@ service mariadb stop
 
 Final init_mariadb.sh result:
 ~~~
+#! /bin/bash
+
 intialize_service()
 {
     service mariadb start
