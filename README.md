@@ -353,6 +353,7 @@ The <code>tail -f /dev/null</code> it's temporal, we will override it at the end
 
 
 ## Install and configure wordpress
+### Install wp-cli
 As wordpress must be installed and configured from start, without admin panel, we have to install wp-cli to install wordpress with it <br/>
 https://make.wordpress.org/cli/handbook/guides/installing/
 ~~~
@@ -394,6 +395,53 @@ EXPOSE 9000
 
 ENTRYPOINT [ "tail", "-f", "/dev/null" ]
 ~~~
+
+### Install and configure wordpress using wp-cli
+First, we need to add the wordpress service, volume and network to compose so we can fully test it works with mariadb container and .env
+~~~
+name: inception
+
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    volumes:
+      - database:/var/lib/mysql
+    networks:
+      - backend
+    env_file: .env
+    restart: always
+  wordpress:
+    container_name: wordpress
+    build: requirements/wordpress
+    volumes:
+      - website:/var/www/html
+    networks:
+      - backend
+    env_file: .env
+    restart: always
+    depends_on:
+      - mariadb
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  database:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${VOLUMES_PATH}database
+      o: bind
+  website:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${VOLUMES_PATH}website
+      o: bind
+~~~
+
 
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results

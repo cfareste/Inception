@@ -37,6 +37,7 @@ WORDPRESS_DIR = $(REQS)wordpress/
 YAML = ./srcs/docker-compose.yml
 VOLUMES_PATH = ./data/
 DATABASE_VOLUME = $(VOLUMES_PATH)database/
+WEBSITE_VOLUME = $(VOLUMES_PATH)website/
 
 # ------------------ #
 
@@ -57,7 +58,7 @@ list:
 
 up:
 	@$(PRINT) "$(BLUE)Creating $(WHITE_BOLD)volumes$(BLUE) directories...$(RESET)"
-	@$(MKDIR) $(VOLUMES_PATH) $(DATABASE_VOLUME)
+	@$(MKDIR) $(DATABASE_VOLUME) $(WEBSITE_VOLUME)
 	@$(PRINT) "$(BLUE)Deploying $(WHITE_BOLD)application$(BLUE)...$(RESET)"
 	@$(DOCKER) compose -f $(YAML) up -d --build
 

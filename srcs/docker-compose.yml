@@ -6,8 +6,25 @@ services:
     build: requirements/mariadb
     volumes:
       - database:/var/lib/mysql
+    networks:
+      - backend
     env_file: .env
     restart: always
+  wordpress:
+    container_name: wordpress
+    build: requirements/wordpress
+    volumes:
+      - website:/var/www/html
+    networks:
+      - backend
+    env_file: .env
+    restart: always
+    depends_on:
+      - mariadb
+
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   database:
@@ -15,4 +32,10 @@ volumes:
     driver_opts:
       type: none
       device: ${VOLUMES_PATH}database
+      o: bind
+  website:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${VOLUMES_PATH}website
       o: bind
