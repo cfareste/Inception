@@ -27,11 +27,13 @@ PRINT = echo
 DOCKER = docker
 
 MARIADB = mariadb
+WORDPRESS = wordpress
 
 SHARED_DIR = ../shared
 SRCS = srcs/
 REQS = $(SRCS)requirements/
 MARIADB_DIR = $(REQS)mariadb/
+WORDPRESS_DIR = $(REQS)wordpress/
 YAML = ./srcs/docker-compose.yml
 VOLUMES_PATH = ./data/
 DATABASE_VOLUME = $(VOLUMES_PATH)database/
@@ -68,32 +70,32 @@ fdown:
 	@$(DOCKER) compose -f $(YAML) down -v
 	@$(RMV) $(VOLUMES_PATH)
 
-logmariadb:
-	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(MARIADB)$(PINK) logs...$(RESET)"
-	@$(DOCKER) logs $(MARIADB)
+log:
+	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(WORDPRESS)$(PINK) logs...$(RESET)"
+	@$(DOCKER) logs $(WORDPRESS)
 
-bldmariadb:
-	@$(PRINT) "$(PINK)Building $(WHITE_BOLD)$(MARIADB)$(PINK) image...$(RESET)"
-	@$(DOCKER) build -t $(MARIADB) $(MARIADB_DIR)
+bld:
+	@$(PRINT) "$(PINK)Building $(WHITE_BOLD)$(WORDPRESS)$(PINK) image...$(RESET)"
+	@$(DOCKER) build -t $(WORDPRESS) $(WORDPRESS_DIR)
 
-runmariadb:
-	@$(PRINT) "$(PINK)Running $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
-	@$(DOCKER) run -d --name $(MARIADB) $(MARIADB)
+run:
+	@$(PRINT) "$(PINK)Running $(WHITE_BOLD)$(WORDPRESS)$(PINK) container...$(RESET)"
+	@$(DOCKER) run -d --name $(WORDPRESS) $(WORDPRESS)
 
-dplmariadb: bldmariadb runmariadb
-	@$(PRINT) "$(GREEN)The $(WHITE_BOLD)mariadb$(GREEN) container deployed successfully$(RESET)"
+dpl: bld run
+	@$(PRINT) "$(GREEN)The $(WHITE_BOLD)$(WORDPRESS)$(GREEN) container deployed successfully$(RESET)"
 
-excmariadb:
-	@$(PRINT) "$(PINK)Interacting with $(WHITE_BOLD)mariadb$(PINK) container with a $(WHITE_BOLD)bash$(PINK) shell...$(RESET)"
-	@$(DOCKER) exec -it $$(docker ps -aq --filter="name=$(MARIADB)") bash
+exc:
+	@$(PRINT) "$(PINK)Interacting with $(WHITE_BOLD)$(WORDPRESS)$(PINK) container with a $(WHITE_BOLD)bash$(PINK) shell...$(RESET)"
+	@$(DOCKER) exec -it $$(docker ps -aq --filter="name=$(WORDPRESS)") bash
 
-stpmariadb:
-	@$(PRINT) "$(PINK)Stopping $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
-	@$(DOCKER) stop $$(docker ps -aq --filter="name=$(MARIADB)")
+stp:
+	@$(PRINT) "$(PINK)Stopping $(WHITE_BOLD)$(WORDPRESS)$(PINK) container...$(RESET)"
+	@$(DOCKER) stop $$(docker ps -aq --filter="name=$(WORDPRESS)")
 
-clnmariadb: stpmariadb
-	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(MARIADB)$(PINK) container...$(RESET)"
-	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(MARIADB)")
+cln: stp
+	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(WORDPRESS)$(PINK) container...$(RESET)"
+	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(WORDPRESS)")
 
 clean: down
 	@$(PRINT) "$(PINK)Application $(GREEN)removed$(PINK).$(RESET)"

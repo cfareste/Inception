@@ -264,6 +264,7 @@ volumes:
 As wordpress will connect to create the necessary tables, should we create the database or its created by default?: YES <br/>
 https://wpdataaccess.com/docs/remote-databases/mysql-mariadb/ <br/>
 https://www.sitepoint.com/community/t/how-does-wordpress-automatically-create-a-database-on-installation/112298 <br/>
+https://ubuntu.com/tutorials/install-and-configure-wordpress#5-configure-database
 
 Steps:
 1. Create database: https://mariadb.com/kb/en/create-database/ <br/>
@@ -330,6 +331,26 @@ service mariadb stop
 
 mariadbd
 ~~~
+
+
+# Wordpress and php-fpm
+## Installing php-fpm
+We need to install wordpress and php-fpm (PHP fastcgi process manager). <br/>
+PHP package tries to install Apache2 (even some modules of PHP try to install it too), so we need to install php-fpm alone <br/>
+https://askubuntu.com/questions/1160433/how-to-install-php-without-apache-webserver <br/>
+Starting Dockerfile with only php-fpm
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm
+
+EXPOSE 9000
+
+ENTRYPOINT [ "tail", "-f", "/dev/null" ]
+~~~
+The <code>tail -f /dev/null</code> it's temporal, we will override it at the end
+
 
 
 # TIPS
