@@ -1,6 +1,16 @@
 # Inception
 A small application infrastructure using Docker and Docker compose
 
+# PID 1 in docker
+https://github.com/antontkv/docker-and-pid1
+
+# How does Nginx + php-fpm + WordrPress ecosystem works
+What really is wordpress and how it works: https://en.wikipedia.org/wiki/WordPress <br/>
+Wordpress builds only dynamic websites: https://www.liquidweb.com/wordpress/php/ <br/>
+How nginx works with php-fpm to return static AND dynamic websites: https://www.sitepoint.com/lightning-fast-wordpress-with-php-fpm-and-nginx/ <br/>
+How does wordpress, php-fpm and nginx work together: https://flywp.com/blog/9281/optimize-php-fpm-settings-flywp/ <br/>
+PHP workers: https://spinupwp.com/doc/how-php-workers-impact-wordpress-performance/
+
 # MariaDB
 https://github.com/MariaDB/mariadb-docker/blob/2d5103917774c4c53ec6bf3c6fdfc7b210e85690/11.8/Dockerfile <br/>
 AND Executing a simple Dockerfile with mariadb and seeing what's wrong:
@@ -395,6 +405,10 @@ EXPOSE 9000
 
 ENTRYPOINT [ "tail", "-f", "/dev/null" ]
 ~~~
+If we try to enter the container and execute wp core --help, it will deny because we are not root. So from now on, we will have to add
+--allow-root to all the queries <br/>
+https://www.reddit.com/r/Wordpress/comments/dwukz2/running_wpcli_commands_as_root/
+
 
 ### Install and configure wordpress using wp-cli
 First, we need to add the wordpress service, volume and network to compose so we can fully test it works with mariadb container and .env
@@ -441,6 +455,113 @@ volumes:
       device: ${VOLUMES_PATH}website
       o: bind
 ~~~
+Then, we download, configure and install wordpress with wp-cli: <br/>
+https://make.wordpress.org/cli/handbook/how-to/how-to-install/ <br/>
+We also need to create a non-admin user so: <br/>
+https://developer.wordpress.org/cli/commands/user/create/
+
+For it, we create init_wordpress.sh: <br/>
+~~~
+#! /bin/bash
+
+install_and_configure_wordpress()
+{
+    if [ -f wp-config.php ]; then return 0; fi
+
+    wp core download --allow-root
+    wp config create --dbname=$DATABASE_NAME --dbuser=$DATABASE_USER_NAME --dbpass=$DATABASE_USER_PASSWORD --allow-root
+    wp core install --url=$DOMAIN_NAME --title="$WEBSITE_TITLE" --admin_user=$WEBSITE_ADMIN_USER --admin_password=$WEBSITE_ADMIN_PASSWORD --allow-root
+    wp user create $WEBSITE_AUTHOR_USER $WEBSITE_AUTHOR_EMAIL --role=author --user_pass=$WEBSITE_AUTHOR_PASSWORD --allow-root
+}
+
+install_and_configure_wordpress
+tail -f /dev/null
+~~~
+And as we want to execute the php-fpm as daemon, we need to execute it with the flag -F: <br/>
+https://stackoverflow.com/questions/37313780/how-can-i-start-php-fpm-in-a-docker-container-by-default
+~~~
+[...]
+
+php-fpm7.4 -F
+~~~
+Also, wordpress must be installed in the root directory of nginx, so we set the workdir there: <br/>
+https://serverfault.com/questions/718449/default-directory-for-nginx
+~~~
+[...]
+
+WORKDIR /var/www/html
+
+[...]
+~~~
+
+We see 2 errors: <br/>
+1. Undefined function mysqli_init(): <br/>
+https://serverfault.com/questions/971430/wordpress-php-uncaught-error-call-to-undefined-function-mysql-connect <br/>
+We need to install php-mysqli
+~~~
+[...]
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli
+
+[...]
+~~~
+2. Unable to bind socket for address /run/php/php7.4-fpm.sock <br/>
+Similar to how we fixed it in mariadb container, we need to create /run/php: <br/>
+~~~
+[...]
+
+RUN mkdir -p /run/php && \
+    chmod 777 /run/php
+
+[...]
+~~~
+Final result of Dockerfile:
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli
+
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
+
+RUN mkdir -p /run/php && \
+    chmod 777 /run/php
+
+COPY --chmod=700 ./tools/init_wordpress.sh /root/init_wordpress.sh
+
+WORKDIR /var/www/html
+
+EXPOSE 9000
+
+ENTRYPOINT [ "/root/init_wordpress.sh" ]
+~~~
+This also fails because it tries to send an email to the admin_email. We can prevent it with --skip-email <br/>
+https://github.com/wp-cli/wp-cli/issues/1172 <br/>
+Final result:
+~~~
+#! /bin/bash
+
+install_and_configure_wordpress()
+{
+    if [ -f wp-config.php ]; then return 0; fi
+
+    wp core download --allow-root
+    wp config create --dbname=$DATABASE_NAME --dbuser=$DATABASE_USER_NAME --dbpass=$DATABASE_USER_PASSWORD --allow-root
+    wp core install --url=$DOMAIN_NAME --title="$WEBSITE_TITLE" --admin_user=$WEBSITE_ADMIN_USER --admin_password=$WEBSITE_ADMIN_PASSWORD --allow-root
+    wp user create $WEBSITE_AUTHOR_USER $WEBSITE_AUTHOR_EMAIL --role=author --user_pass=$WEBSITE_AUTHOR_PASSWORD --allow-root
+}
+
+install_and_configure_wordpress
+php-fpm7.4 -F
+~~~
+
+
+
+
+
 
 
 # TIPS
