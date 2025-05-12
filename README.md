@@ -352,6 +352,48 @@ ENTRYPOINT [ "tail", "-f", "/dev/null" ]
 The <code>tail -f /dev/null</code> it's temporal, we will override it at the end
 
 
+## Install and configure wordpress
+As wordpress must be installed and configured from start, without admin panel, we have to install wp-cli to install wordpress with it <br/>
+https://make.wordpress.org/cli/handbook/guides/installing/
+~~~
+[...]
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl
+
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
+
+[...]
+~~~
+It fails: curl: (77) error setting certificate verify locations:  CAfile: /etc/ssl/certs/ca-certificates.crt CApath: /etc/ssl/certs <br/>
+https://askubuntu.com/questions/1390288/curl-77-error-setting-certificate-verify-locations-ubuntu-20-04-3-lts <br/>
+So we need to install ca-certificates
+~~~
+[...]
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl ca-certificates
+
+[...]
+~~~
+We can enter the container with a shell and execute wp --info to see it's installed properly. <br/>
+Final result:
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl ca-certificates
+
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
+
+EXPOSE 9000
+
+ENTRYPOINT [ "tail", "-f", "/dev/null" ]
+~~~
 
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
