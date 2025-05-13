@@ -38,7 +38,8 @@ WORDPRESS_DIR = $(REQS)wordpress/
 NGINX_DIR = $(REQS)nginx/
 ENV_FILE = $(SRCS).env
 YAML = $(SRCS)docker-compose.yml
-VOLUMES_PATH = /home/cfidalgo/data/
+VOLUMES_PATH = /home/chris/42bcn/Inception/data/
+# VOLUMES_PATH = /home/cfidalgo/data/
 DATABASE_VOLUME = $(VOLUMES_PATH)database/
 WEBSITE_VOLUME = $(VOLUMES_PATH)website/
 

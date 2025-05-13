@@ -17,13 +17,29 @@ services:
       - website:/var/www/html
     networks:
       - backend
+      - frontend
     env_file: .env
     restart: always
     depends_on:
       - mariadb
+  nginx:
+    container_name: nginx
+    build: requirements/nginx
+    volumes:
+      - website:/var/www/html
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+    env_file: .env
+    restart: always
+    depends_on:
+      - wordpress
 
 networks:
   backend:
+    driver: bridge
+  frontend:
     driver: bridge
 
 volumes:

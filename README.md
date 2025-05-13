@@ -646,6 +646,47 @@ RUN apt update && \
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
 ~~~
+## Add nginx service to docker-compose
+Is the same as the other services but we need to add port forwarding (publishing ports). <br/>
+For testing purposes, we will map the container port 80 with the host port 80 (when we add the
+SSL certificate we will map both 443): <br/>
+https://docs.docker.com/reference/compose-file/services/#ports <br/>
+We do this because the browser expects a secure connection on the port 443, and if the server can't
+handle it (as we didn't configure nginx, neither create a certificate), it returns a connection reset error: <br/>
+You can check this on /etc/nginx/sites-available/default and https://serverfault.com/questions/842779/set-nginx-https-on-port-443-without-the-certificate <br/>
+We also need to create a new network for the "frontend" part of the app (wordpress - nginx) <br/>
+docker-compose.yml:
+~~~
+[...]
+  nginx:
+    container_name: nginx
+    build: requirements/nginx
+    volumes:
+      - website:/var/www/html
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+    env_file: .env
+    restart: always
+    depends_on:
+      - wordpress
+
+networks:
+  [...]
+  frontend:
+    driver: bridge
+
+[...]
+~~~
+Nginx Dockerfile:
+~~~
+[...]
+
+EXPOSE 80
+
+[...]
+~~~
 
 
 # TIPS
