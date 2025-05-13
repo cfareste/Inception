@@ -28,12 +28,14 @@ DOCKER = docker
 
 MARIADB = mariadb
 WORDPRESS = wordpress
+NGINX = nginx
 
 SHARED_DIR = ../shared
 SRCS = srcs/
 REQS = $(SRCS)requirements/
 MARIADB_DIR = $(REQS)mariadb/
 WORDPRESS_DIR = $(REQS)wordpress/
+NGINX_DIR = $(REQS)nginx/
 ENV_FILE = $(SRCS).env
 YAML = $(SRCS)docker-compose.yml
 VOLUMES_PATH = /home/cfidalgo/data/
@@ -73,31 +75,31 @@ fdown:
 	@$(RMV) $(VOLUMES_PATH)
 
 log:
-	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(WORDPRESS)$(PINK) logs...$(RESET)"
-	@$(DOCKER) logs $(WORDPRESS)
+	@$(PRINT) "$(PINK)Reading $(WHITE_BOLD)$(NGINX)$(PINK) logs...$(RESET)"
+	@$(DOCKER) logs $(NGINX)
 
 bld:
-	@$(PRINT) "$(PINK)Building $(WHITE_BOLD)$(WORDPRESS)$(PINK) image...$(RESET)"
-	@$(DOCKER) build -t $(WORDPRESS) $(WORDPRESS_DIR)
+	@$(PRINT) "$(PINK)Building $(WHITE_BOLD)$(NGINX)$(PINK) image...$(RESET)"
+	@$(DOCKER) build -t $(NGINX) $(NGINX_DIR)
 
 run:
-	@$(PRINT) "$(PINK)Running $(WHITE_BOLD)$(WORDPRESS)$(PINK) container...$(RESET)"
-	@$(DOCKER) run -d --name $(WORDPRESS) $(WORDPRESS)
+	@$(PRINT) "$(PINK)Running $(WHITE_BOLD)$(NGINX)$(PINK) container...$(RESET)"
+	@$(DOCKER) run -d --name $(NGINX) $(NGINX)
 
 dpl: bld run
-	@$(PRINT) "$(GREEN)The $(WHITE_BOLD)$(WORDPRESS)$(GREEN) container deployed successfully$(RESET)"
+	@$(PRINT) "$(GREEN)The $(WHITE_BOLD)$(NGINX)$(GREEN) container deployed successfully$(RESET)"
 
 exc:
-	@$(PRINT) "$(PINK)Interacting with $(WHITE_BOLD)$(WORDPRESS)$(PINK) container with a $(WHITE_BOLD)bash$(PINK) shell...$(RESET)"
-	@$(DOCKER) exec -it $$(docker ps -aq --filter="name=$(WORDPRESS)") bash
+	@$(PRINT) "$(PINK)Interacting with $(WHITE_BOLD)$(NGINX)$(PINK) container with a $(WHITE_BOLD)bash$(PINK) shell...$(RESET)"
+	@$(DOCKER) exec -it $$(docker ps -aq --filter="name=$(NGINX)") bash
 
 stp:
-	@$(PRINT) "$(PINK)Stopping $(WHITE_BOLD)$(WORDPRESS)$(PINK) container...$(RESET)"
-	@$(DOCKER) stop $$(docker ps -aq --filter="name=$(WORDPRESS)")
+	@$(PRINT) "$(PINK)Stopping $(WHITE_BOLD)$(NGINX)$(PINK) container...$(RESET)"
+	@$(DOCKER) stop $$(docker ps -aq --filter="name=$(NGINX)")
 
 cln: stp
-	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(WORDPRESS)$(PINK) container...$(RESET)"
-	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(WORDPRESS)")
+	@$(PRINT) "$(PINK)Removing $(WHITE_BOLD)$(NGINX)$(PINK) container...$(RESET)"
+	@$(DOCKER) rm $$(docker ps -aq --filter="name=$(NGINX)")
 
 clean: down
 	@$(PRINT) "$(PINK)Application $(GREEN)removed$(PINK).$(RESET)"

@@ -635,6 +635,19 @@ ENTRYPOINT [ "/root/init_wordpress.sh" ]
 ~~~
 
 
+# Nginx
+Create a Dockerfile and install nginx only <br/>
+To run nginx as a foreground process: https://www.uptimia.com/questions/how-to-run-nginx-in-the-foreground-within-a-docker-container
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+	apt install -y --no-install-recommends nginx
+
+ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
+~~~
+
+
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
 even if you rebuild
