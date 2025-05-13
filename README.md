@@ -4,12 +4,16 @@ A small application infrastructure using Docker and Docker compose
 # PID 1 in docker
 https://github.com/antontkv/docker-and-pid1
 
-# How does Nginx + php-fpm + WordrPress ecosystem works
+# How does Nginx + php-fpm + WordPress ecosystem works
 What really is wordpress and how it works: https://en.wikipedia.org/wiki/WordPress <br/>
 Wordpress builds only dynamic websites: https://www.liquidweb.com/wordpress/php/ <br/>
 How nginx works with php-fpm to return static AND dynamic websites: https://www.sitepoint.com/lightning-fast-wordpress-with-php-fpm-and-nginx/ <br/>
 How does wordpress, php-fpm and nginx work together: https://flywp.com/blog/9281/optimize-php-fpm-settings-flywp/ <br/>
-PHP workers: https://spinupwp.com/doc/how-php-workers-impact-wordpress-performance/
+PHP workers: https://spinupwp.com/doc/how-php-workers-impact-wordpress-performance/ <br/>
+Differences between CGI, FastCGI and FPM: <br/>
+1. https://help.quickhost.uk/index.php/knowledge-base/whats-the-difference-between-cgi-dso-suphp-and-lsapi-php <br/>
+2. https://serverfault.com/questions/645755/differences-and-dis-advanages-between-fast-cgi-cgi-mod-php-suphp-php-fpm <br/>
+3. https://www.basezap.com/difference-php-cgi-php-fpm/
 
 # MariaDB
 https://github.com/MariaDB/mariadb-docker/blob/2d5103917774c4c53ec6bf3c6fdfc7b210e85690/11.8/Dockerfile <br/>
@@ -194,10 +198,10 @@ install_secure_policies()
 {
     # Remove anonymous users
     mariadb -e "DELETE FROM mysql.user WHERE User='';"
-    
+
     # Disallow remote root login
     mariadb -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
-    
+
     # Remove test database and privileges on this database
     mariadb -e "DROP DATABASE IF EXISTS test;"
     mariadb -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
@@ -223,7 +227,7 @@ https://docs.docker.com/reference/compose-file/networks/ <br/>
 https://docs.docker.com/reference/compose-file/secrets/
 
 ## Creating wordpress database volume
-Having this simple docker-compose.yml: 
+Having this simple docker-compose.yml:
 ~~~
 name: inception
 
@@ -234,7 +238,7 @@ services:
     restart: always
 
 ~~~
-We need to create the database volume. 
+We need to create the database volume.
 ~~~
 volumes:
   database:
@@ -314,10 +318,10 @@ install_secure_policies()
 {
     # Remove anonymous users
     mariadb -e "DELETE FROM mysql.user WHERE User='';"
-    
+
     # Disallow remote root login
     mariadb -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
-    
+
     # Remove test database and privileges on this database
     mariadb -e "DROP DATABASE IF EXISTS test;"
     mariadb -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
@@ -550,7 +554,7 @@ install_and_configure_wordpress()
 
     wp core download --allow-root
     wp config create --dbname=$DATABASE_NAME --dbuser=$DATABASE_USER_NAME --dbpass=$DATABASE_USER_PASSWORD --allow-root
-    wp core install --url=$DOMAIN_NAME --title="$WEBSITE_TITLE" --admin_user=$WEBSITE_ADMIN_USER --admin_password=$WEBSITE_ADMIN_PASSWORD --allow-root
+    wp core install --url=$DOMAIN_NAME --title="$WEBSITE_TITLE" --admin_user=$WEBSITE_ADMIN_USER --admin_password=$WEBSITE_ADMIN_PASSWORD --skip-email --allow-root
     wp user create $WEBSITE_AUTHOR_USER $WEBSITE_AUTHOR_EMAIL --role=author --user_pass=$WEBSITE_AUTHOR_PASSWORD --allow-root
 }
 

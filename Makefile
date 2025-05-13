@@ -34,8 +34,9 @@ SRCS = srcs/
 REQS = $(SRCS)requirements/
 MARIADB_DIR = $(REQS)mariadb/
 WORDPRESS_DIR = $(REQS)wordpress/
-YAML = ./srcs/docker-compose.yml
-VOLUMES_PATH = ./data/
+ENV_FILE = $(SRCS).env
+YAML = $(SRCS)docker-compose.yml
+VOLUMES_PATH = /home/cfidalgo/data/
 DATABASE_VOLUME = $(VOLUMES_PATH)database/
 WEBSITE_VOLUME = $(VOLUMES_PATH)website/
 
@@ -47,7 +48,7 @@ all:
 
 copy:
 	@$(PRINT) "$(PINK)Copying files to $(WHITE_BOLD)VM$(PINK)...$(RESET)"
-	@$(COPY) * $(SHARED_DIR)
+	@$(COPY) * $(ENV_FILE) $(SHARED_DIR)
 	@$(PRINT) "$(GREEN)Files copied$(RESET)"
 
 list:
