@@ -563,9 +563,76 @@ php-fpm7.4 -F
 ~~~
 
 
+## Configure php-fpm pools
+https://www.digitalocean.com/community/tutorials/php-fpm-nginx <br/>
+https://www.php.net/manual/en/install.fpm.configuration.php <br/>
+and going to the wordpress container and reading the configuratin under /etc/php/x.x/fpm/pool.d/www.conf <br/>
+What is the user www-data: https://askubuntu.com/questions/873839/what-is-the-www-data-user <br/>
+Final result (remind that ; are comments here):
+~~~
+[inception]
+; User and group that will execute the pool of processes
+user = www-data
+group = www-data
 
+; What interfaces (IPs) and port should listen
+listen = 0.0.0.0:9000
 
+; How will fpm manage the pool processes: Dynamic means the number of
+; processes will fluctuate, but there will be at least one children
+pm = dynamic
 
+; Maximum of processes alive (in other words, maximum of requests handled at the same time)
+pm.max_children = 20
+
+; Number of processes at start
+pm.start_servers = 10
+
+; Minimum 'idle' processes (waiting for process). If there are less 'idle' processes than
+; this directive, some children processes will be created
+pm.min_spare_servers = 1
+
+; Maximum 'idle' processes (waiting for process). If there are more 'idle' processes than
+; this directive, some children processes will be killed
+pm.max_spare_servers = 15
+~~~
+How does php-fpm differentiate which pool configuration use on every request?: <br/>
+Answer: By the listen directive. Every request coming in a concrete tcp / unix socket will
+use the pool directive configured for that listen directive <br/>
+https://www.tecmint.com/connect-nginx-to-php-fpm/
+
+On the Dockerfile, we need to copy the configuration:
+~~~
+[...]
+
+COPY ./conf/inception_pool.conf /etc/php/7.4/fpm/pool.d/inception.conf
+
+[...]
+~~~
+Final result:
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli
+
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
+
+RUN mkdir -p /run/php && \
+    chmod 777 /run/php
+
+COPY ./conf/inception_pool.conf /etc/php/7.4/fpm/pool.d/inception.conf
+
+COPY --chmod=700 ./tools/init_wordpress.sh /root/init_wordpress.sh
+
+WORKDIR /var/www/html
+
+EXPOSE 9000
+
+ENTRYPOINT [ "/root/init_wordpress.sh" ]
+~~~
 
 
 # TIPS
