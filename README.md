@@ -688,6 +688,119 @@ EXPOSE 80
 [...]
 ~~~
 
+## Configure Nginx to redirect the requests to our wordpress container
+We need to create the configuration to listen on port 80 (we will change it to 443 later), with the
+login.42.fr as domain, and to serve both static and dynamic files (using php-fpm on wordpress container) <br/>
+https://nginx.org/en/docs/beginners_guide.html <br/>
+https://nginx.org/en/docs/http/request_processing.html <br/>
+https://nginx.org/en/docs/http/ngx_http_core_module.html
+~~~
+server {
+    # Listen to specific port for IPv4 and IPv6
+    listen 80;
+    listen [::]:80;
+
+    # Listen to requests that comes from this specific domain
+    server_name cfidalgo.42.fr;
+
+    # Set the root directory of every file (request of index.php will return /var/www/html/index.php).
+    # The root must much with the wordpress files volume
+    root /var/www/html;
+
+    # Directive for every request that starts with / (every request, its a catch-all location)
+    # setting the index file (the main file)
+    location / {
+        index index.html index.php;
+    }
+
+    # Directive for every request that finishes with .php
+    location ~ \.php$ {
+        # Pass the .php files to the FPM listening on this address
+        fastcgi_pass  wordpress:9000;
+
+        # FPM variables that set the full path to the file (/var/www/html/index.php) and the
+        # file name itself (/index.php)
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param QUERY_STRING    $query_string;
+    }
+}
+~~~
+Where do we need to paste this config? Answer: /etc/nginx/sites-available and make a link to
+it in sites-enabled (better practice). Or just in sites-enabled / conf.d directories if you are too lazy: <br/>
+https://www.fegno.com/nginx-configuration-file-to-host-website-on-ubuntu/
+~~~
+[...]
+
+COPY ./conf/inception_server.conf /etc/nginx/sites-available/
+
+RUN ln -s /etc/nginx/sites-available/inception_server.conf /etc/nginx/sites-enabled/
+
+EXPOSE 80
+
+WORKDIR /var/www/html
+
+[...]
+~~~
+This fails. All pages appears to be blank. This is caused because we need to pass more fastcgi_param variables to the php server. <br/>
+https://nginx.org/en/docs/http/ngx_http_fastcgi_module.html <br/>
+https://developer.wordpress.org/advanced-administration/server/web-server/nginx/ <br/>
+If we also go to the container of nginx and cat /etc/nginx/fastcgi.conf, we can see it contains all necessary variables for us
+~~~
+[...]
+
+    # Directive for every request that finishes with .php
+    location ~ \.php$ {
+        # Pass the .php files to the FPM listening on this address
+        fastcgi_pass  wordpress:9000;
+
+        # Include the necessary variables
+        include fastcgi.conf;
+    }
+
+[...]
+~~~
+This works, but we can improve this with some small details. <br/>
+First, add the index directive to the server context directly (instead of the location) to get an index in every location. <br/>
+https://nginx.org/en/docs/http/ngx_http_index_module.html <br/>
+We can also add try_files directive to try the existence of the static files and process the request with them, or define another behavior <br/>
+https://nginx.org/en/docs/http/ngx_http_core_module.html#try_files <br/>
+https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
+~~~
+server {
+    # Listen to specific port for IPv4 and IPv6
+    listen 80;
+    listen [::]:80;
+
+    # Listen to requests that comes from this specific domain
+    server_name cfidalgo.42.fr;
+
+    # Set the root directory of every file (request of index.php will return /var/www/html/index.php)
+    root /var/www/html;
+
+    # Set the index file (the main file) globally, for every location
+    index index.html index.php;
+
+    # Directive for every request that starts with / (every request, its a catch-all location)
+    location / {
+        # Check if the static file exists. If not, check if the index file at that directory exists.
+        # If neither exists, error 404 not found
+        try_files $uri $uri/ =404;
+    }
+
+    # Directive for every request that finishes with .php
+    location ~ \.php$ {
+        # Check if php file exists; if not, error 404 not found
+        try_files $uri =404;
+
+        # Pass the .php files to the FPM listening on this address
+        fastcgi_pass  wordpress:9000;
+
+        # Include the necessary variables
+        include fastcgi.conf;
+    }
+}
+~~~
+
 
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
