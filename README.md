@@ -821,6 +821,8 @@ We will create it in the create_tls_cert.sh script:
 
 create_tls_cert()
 {
+    if [ -f /etc/ssl/certs/inception.crt ] && [ -f /etc/ssl/private/inception.key ]; then return 0; fi;
+
     openssl req -x509 \
                 -nodes \
                 -days 365 \
