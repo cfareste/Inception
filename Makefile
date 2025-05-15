@@ -55,10 +55,14 @@ copy:
 	@$(PRINT) "$(GREEN)Files copied$(RESET)"
 
 list:
-	@$(PRINT) "$(CYAN)Printing all docker $(YELLOW)containers$(CYAN):$(RESET)"
+	@$(PRINT) "$(CYAN)Printing all $(YELLOW)containers$(CYAN):$(RESET)"
 	@$(DOCKER) ps -a
-	@$(PRINT) "$(CYAN)Printing all docker $(YELLOW)images$(CYAN):$(RESET)"
+	@$(PRINT) "$(CYAN)Printing all $(YELLOW)images$(CYAN):$(RESET)"
 	@$(DOCKER) images -a
+	@$(PRINT) "$(CYAN)Printing all $(WHITE)volumes$(CYAN):$(RESET)"
+	@$(DOCKER) volume ls
+	@$(PRINT) "$(CYAN)Printing all $(WHITE)networks$(CYAN):$(RESET)"
+	@$(DOCKER) network ls
 
 up:
 	@$(PRINT) "$(BLUE)Creating $(WHITE_BOLD)volumes$(BLUE) directories...$(RESET)"

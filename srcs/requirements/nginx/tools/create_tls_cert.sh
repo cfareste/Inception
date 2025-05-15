@@ -1,0 +1,15 @@
+#! /bin/bash
+
+create_tls_cert()
+{
+    openssl req -x509 \
+                -nodes \
+                -days 365 \
+                -newkey rsa:4096 \
+                -keyout /etc/ssl/private/inception.key \
+                -out /etc/ssl/certs/inception.crt \
+                -subj "/C=SP/ST=Barcelona/L=Barcelona/O=42bcn/OU=42bcn/CN=cfidalgo.42.fr/emailAddress=cfidalgo@gmail.com"
+}
+
+create_tls_cert
+nginx -g 'daemon off;'

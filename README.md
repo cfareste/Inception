@@ -764,7 +764,8 @@ First, add the index directive to the server context directly (instead of the lo
 https://nginx.org/en/docs/http/ngx_http_index_module.html <br/>
 We can also add try_files directive to try the existence of the static files and process the request with them, or define another behavior <br/>
 https://nginx.org/en/docs/http/ngx_http_core_module.html#try_files <br/>
-https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
+https://en.wikipedia.org/wiki/Uniform_Resource_Identifier <br/>
+Final result:
 ~~~
 server {
     # Listen to specific port for IPv4 and IPv6
@@ -801,6 +802,87 @@ server {
 }
 ~~~
 
+
+## TLS certificate
+What is SSL and TLS: <br/>
+https://www.cloudflare.com/learning/ssl/what-is-ssl/ <br/>
+https://www.cloudflare.com/learning/ssl/what-happens-in-a-tls-handshake/ <br/>
+https://www.cloudflare.com/learning/ssl/how-does-ssl-work/ <br/>
+https://blog.cloudflare.com/rfc-8446-aka-tls-1-3/ <br/>
+Why using RSA as the encrypting algorithm is dangerous:
+https://crypto.stackexchange.com/questions/47512/why-plain-rsa-encryption-does-not-achieve-cpa-security <br/>
+
+We need to create a self-signed certificate, with both it's public and private key: <br/>
+https://dev.to/techschoolguru/how-to-create-sign-ssl-tls-certificates-2aai <br/>
+https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu <br/>
+We will create it in the create_tls_cert.sh script:
+~~~
+#! /bin/bash
+
+create_tls_cert()
+{
+    openssl req -x509 \
+                -nodes \
+                -days 365 \
+                -newkey rsa:4096 \
+                -keyout /etc/ssl/private/inception.key \
+                -out /etc/ssl/certs/inception.crt \
+                -subj "/C=SP/ST=Barcelona/L=Barcelona/O=42bcn/OU=42bcn/CN=cfidalgo.42.fr/emailAddress=cfidalgo@gmail.com"
+}
+
+create_tls_cert
+nginx -g 'daemon off;'
+~~~
+Then, in Dockerfile:
+~~~
+[...]
+
+COPY --chmod=700 ./tools/create_tls_cert.sh /root/
+
+[...]
+
+ENTRYPOINT [ "/root/create_tls_cert.sh" ]
+~~~
+
+Then, we need to adapt our nginx server to accept SSL connections: <br/>
+http://nginx.org/en/docs/http/configuring_https_servers.html <br/>
+On our nginx configuration:
+~~~
+server {
+    # Listen to specific port for IPv4 and IPv with TLS connections
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    # Listen to requests that comes from this specific domain
+    server_name cfidalgo.42.fr;
+
+    # Locations of the SSL cert and key
+    ssl_certificate     /etc/ssl/certs/inception.crt;
+    ssl_certificate_key /etc/ssl/private/inception.key;
+
+    # Which TLS protocol is active
+    ssl_protocols       TLSv1.3;
+
+   [...]
+
+}
+~~~
+We also need to expose the port 443 and publish it too on the docker-compose.yml: <br/>
+Dockerfile
+~~~
+[...]
+
+EXPOSE 443
+
+[...]
+~~~
+docker-compose.yml
+~~~
+[...]
+    ports:
+      - "443:443"
+[...]
+~~~
 
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
