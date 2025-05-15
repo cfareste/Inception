@@ -224,7 +224,6 @@ https://docs.docker.com/reference/compose-file/build/ <br/>
 https://docs.docker.com/reference/compose-file/volumes/ <br/>
 https://docs.docker.com/engine/extend/legacy_plugins/ <br/>
 https://docs.docker.com/reference/compose-file/networks/ <br/>
-https://docs.docker.com/reference/compose-file/secrets/
 
 ## Creating wordpress database volume
 Having this simple docker-compose.yml:
@@ -667,7 +666,6 @@ docker-compose.yml:
       - frontend
     ports:
       - "80:80"
-    env_file: .env
     restart: always
     depends_on:
       - wordpress
@@ -885,6 +883,158 @@ docker-compose.yml
       - "443:443"
 [...]
 ~~~
+
+
+# Add Docker secrets
+In a production environment, you would use secrets for sensitive data: <br/>
+https://docs.docker.com/reference/compose-file/services/#secrets <br/>
+https://docs.docker.com/reference/compose-file/secrets/ <br/>
+We need to create a secret for every sensitive variable, and replace that .env variable for the path to their
+relative secret <br/>
+.env before:
+~~~
+VOLUMES_PATH=PATH_TO_VOLUMES_DIRECTORY
+DOMAIN_NAME=YOUR_DOMAIN_NAME
+
+DATABASE_NAME=THE_MARIADB_DATABASE_NAME
+DATABASE_USER_NAME=THE_MARIADB_DATABASE_USER_NAME
+DATABASE_USER_PASSWORD=THE_MARIADB_DATABASE_USER_PASSWORD
+
+DATABASE_HOST=THE_SERVICE_NAME_OF_THE_DATABASE
+WEBSITE_TITLE=THE_WEBSITE_TITLE
+WEBSITE_AUTHOR_USER=THE_WORDPRESS_AUTHOR_USER
+WEBSITE_AUTHOR_PASSWORD=THE_WORDPRESS_AUTHOR_PASSWORD
+WEBSITE_AUTHOR_EMAIL=THE_WORDPRESS_AUTHOR_EMAIL
+WEBSITE_ADMIN_USER=THE_WORDPRESS_ADMIN_USER
+WEBSITE_ADMIN_PASSWORD=THE_WORDPRESS_ADMIN_PASSWORD
+WEBSITE_ADMIN_EMAIL=THE_WORDPRESS_ADMIN_EMAIL
+~~~
+and .env after
+~~~
+VOLUMES_PATH=PATH_TO_VOLUMES_DIRECTORY
+DOMAIN_NAME=YOUR_DOMAIN_NAME
+
+DATABASE_NAME_SECRET_PATH=PATH_TO_THE_SECRET                # Extracted to a secret; Now the variable contains the secret path
+DATABASE_USER_NAME_SECRET_PATH=PATH_TO_THE_SECRET           # Extracted to a secret; Now the variable contains the secret path
+DATABASE_USER_PASSWORD_SECRET_PATH=PATH_TO_THE_SECRET       # Extracted to a secret; Now the variable contains the secret path
+
+DATABASE_HOST=THE_SERVICE_NAME_OF_THE_DATABASE
+WEBSITE_TITLE=THE_WEBSITE_TITLE
+WEBSITE_AUTHOR_USER=THE_WORDPRESS_AUTHOR_USER
+WEBSITE_AUTHOR_PASSWORD_SECRET_PATH=PATH_TO_THE_SECRET      # Extracted to a secret; Now the variable contains the secret path
+WEBSITE_AUTHOR_EMAIL=THE_WORDPRESS_AUTHOR_EMAIL
+WEBSITE_ADMIN_USER_SECRET_PATH=PATH_TO_THE_SECRET           # Extracted to a secret; Now the variable contains the secret path
+WEBSITE_ADMIN_PASSWORD_SECRET_PATH=PATH_TO_THE_SECRET       # Extracted to a secret; Now the variable contains the secret path
+WEBSITE_ADMIN_EMAIL_SECRET_PATH=PATH_TO_THE_SECRET          # Extracted to a secret; Now the variable contains the secret path
+
+SECRETS_PREFIX=/run/secrets                                 # New variable; Secrets directory inside a container
+~~~
+
+Then, on the docker-compose.yml, we create the secrets directive:
+~~~
+[...]
+
+secrets:
+  database_name:
+    file: ${DATABASE_NAME_SECRET_PATH}
+  database_user_name:
+    file: ${DATABASE_USER_NAME_SECRET_PATH}
+  database_user_password:
+    file: ${DATABASE_USER_PASSWORD_SECRET_PATH}
+  website_admin_email:
+    file: ${WEBSITE_ADMIN_EMAIL_SECRET_PATH}
+  website_admin_password:
+    file: ${WEBSITE_ADMIN_PASSWORD_SECRET_PATH}
+  website_admin_user:
+    file: ${WEBSITE_ADMIN_USER_SECRET_PATH}
+  website_author_password:
+    file: ${WEBSITE_AUTHOR_PASSWORD_SECRET_PATH}
+~~~
+And also add the necessary secrets to each service:
+~~~
+name: inception
+
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    volumes:
+      - database:/var/lib/mysql
+    networks:
+      - backend
+    secrets:
+      - database_name
+      - database_user_name
+      - database_user_password
+    env_file: .env
+    restart: always
+  wordpress:
+    container_name: wordpress
+    build: requirements/wordpress
+    volumes:
+      - website:/var/www/html
+    networks:
+      - backend
+      - frontend
+    secrets:
+      - database_name
+      - database_user_name
+      - database_user_password
+      - website_admin_email
+      - website_admin_password
+      - website_admin_user
+      - website_author_password
+    env_file: .env
+    restart: always
+    depends_on:
+      - mariadb
+    [...]
+~~~
+
+Lastly, replace the variables in the scripts for the secrets: <br/>
+In init_mariadb.sh:
+~~~
+[...]
+
+initial_transaction()
+{
+    local DATABASE_NAME=$(cat $SECRETS_PREFIX/database_name)
+    local DATABASE_USER_NAME=$(cat $SECRETS_PREFIX/database_user_name)
+    local DATABASE_USER_PASSWORD=$(cat $SECRETS_PREFIX/database_user_password)
+
+    mariadb -e "CREATE DATABASE IF NOT EXISTS $DATABASE_NAME;"
+    mariadb -e "CREATE USER IF NOT EXISTS '$DATABASE_USER_NAME'@'%' IDENTIFIED BY '$DATABASE_USER_PASSWORD';"
+    mariadb -e "GRANT ALL ON $DATABASE_NAME.* TO '$DATABASE_USER_NAME'@'%';"
+    mariadb -e "FLUSH PRIVILEGES;"
+}
+
+[...]
+~~~
+And in init_wordpress.sh:
+~~~
+[...]
+
+install_and_configure_wordpress()
+{
+    if [ -f wp-config.php ]; then return 0; fi
+
+    local DATABASE_NAME=$(cat $SECRETS_PREFIX/database_name)
+    local DATABASE_USER_NAME=$(cat $SECRETS_PREFIX/database_user_name)
+    local DATABASE_USER_PASSWORD=$(cat $SECRETS_PREFIX/database_user_password)
+    local WEBSITE_ADMIN_USER=$(cat $SECRETS_PREFIX/website_admin_user)
+    local WEBSITE_ADMIN_PASSWORD=$(cat $SECRETS_PREFIX/website_admin_password)
+    local WEBSITE_ADMIN_EMAIL=$(cat $SECRETS_PREFIX/website_admin_email)
+    local WEBSITE_AUTHOR_PASSWORD=$(cat $SECRETS_PREFIX/website_author_password)
+
+    wp core download --allow-root
+    wp config create --dbname=$DATABASE_NAME --dbuser=$DATABASE_USER_NAME --dbpass=$DATABASE_USER_PASSWORD --dbhost=$DATABASE_HOST --allow-root
+    wp core install --url=$DOMAIN_NAME --title="$WEBSITE_TITLE" --admin_user=$WEBSITE_ADMIN_USER --admin_password=$WEBSITE_ADMIN_PASSWORD --admin_email=$WEBSITE_ADMIN_EMAIL --skip-email --allow-root
+    wp user create $WEBSITE_AUTHOR_USER $WEBSITE_AUTHOR_EMAIL --role=author --user_pass=$WEBSITE_AUTHOR_PASSWORD --allow-root
+}
+
+[...]
+~~~
+
 
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results

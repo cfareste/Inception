@@ -24,6 +24,10 @@ install_secure_policies()
 
 initial_transaction()
 {
+    local DATABASE_NAME=$(cat $SECRETS_PREFIX/database_name)
+    local DATABASE_USER_NAME=$(cat $SECRETS_PREFIX/database_user_name)
+    local DATABASE_USER_PASSWORD=$(cat $SECRETS_PREFIX/database_user_password)
+
     mariadb -e "CREATE DATABASE IF NOT EXISTS $DATABASE_NAME;"
     mariadb -e "CREATE USER IF NOT EXISTS '$DATABASE_USER_NAME'@'%' IDENTIFIED BY '$DATABASE_USER_PASSWORD';"
     mariadb -e "GRANT ALL ON $DATABASE_NAME.* TO '$DATABASE_USER_NAME'@'%';"

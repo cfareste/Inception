@@ -8,6 +8,10 @@ services:
       - database:/var/lib/mysql
     networks:
       - backend
+    secrets:
+      - database_name
+      - database_user_name
+      - database_user_password
     env_file: .env
     restart: always
   wordpress:
@@ -18,6 +22,14 @@ services:
     networks:
       - backend
       - frontend
+    secrets:
+      - database_name
+      - database_user_name
+      - database_user_password
+      - website_admin_email
+      - website_admin_password
+      - website_admin_user
+      - website_author_password
     env_file: .env
     restart: always
     depends_on:
@@ -31,7 +43,6 @@ services:
       - frontend
     ports:
       - "443:443"
-    env_file: .env
     restart: always
     depends_on:
       - wordpress
@@ -55,3 +66,19 @@ volumes:
       type: none
       device: ${VOLUMES_PATH}website
       o: bind
+
+secrets:
+  database_name:
+    file: ${DATABASE_NAME_SECRET_PATH}
+  database_user_name:
+    file: ${DATABASE_USER_NAME_SECRET_PATH}
+  database_user_password:
+    file: ${DATABASE_USER_PASSWORD_SECRET_PATH}
+  website_admin_email:
+    file: ${WEBSITE_ADMIN_EMAIL_SECRET_PATH}
+  website_admin_password:
+    file: ${WEBSITE_ADMIN_PASSWORD_SECRET_PATH}
+  website_admin_user:
+    file: ${WEBSITE_ADMIN_USER_SECRET_PATH}
+  website_author_password:
+    file: ${WEBSITE_AUTHOR_PASSWORD_SECRET_PATH}
