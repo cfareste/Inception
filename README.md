@@ -1037,6 +1037,87 @@ install_and_configure_wordpress()
 ~~~
 
 
+# Bonus
+## Static website
+https://blog.hubspot.com/website/static-vs-dynamic-website <br/>
+Create a simple static website in any language except PHP. We will use HTML, CSS and Javascript <br/>
+Everyone should build its own website. But for testing, this temporary HTML will do:
+~~~
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tic ❌ Tac ⭕ Toe</title>
+	<link rel="stylesheet" href="style/index.css">
+	<script defer src="script/index.js"></script>
+</head>
+<body>
+	<h1>Tic Tac Toe Game</h1>
+	<p>
+		Test!
+	</p>
+	<button id="testBtn" class="button">Click me!</button>
+</body>
+</html>
+~~~
+Javascript:
+~~~
+const testButton = document.getElementById('testBtn');
+
+testButton.addEventListener('click', () => {
+	console.log('I have been clicked!');
+});
+~~~
+CSS:
+~~~
+.button {
+	background-color: darkblue;
+	color: white;
+}
+~~~
+Then, in our nginx Dockerfile:
+~~~
+[...]
+
+WORKDIR /var/www/html
+
+# Bonus
+COPY ../bonus/web/ ./web
+
+[...]
+~~~
+This fails because it can't find /bonus/web. That is caused by the Dockerfile context (srcs/requirements/nginx. Here,
+it doesnt exist bonus/web). We can't go before that context. So for make it work we need to specify a context in the docker-compose.yml: <br/>
+https://stackoverflow.com/questions/24537340/docker-adding-a-file-from-a-parent-directory
+~~~
+[...]
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements
+      dockerfile: ./nginx/Dockerfile
+[...]
+~~~
+And now, we need to change every path (mostly de COPY's ones) to the according context in the nginx Dockerfile
+~~~
+[...]
+
+COPY ./nginx/conf/inception_server.conf /etc/nginx/sites-available/
+
+[...]
+
+COPY --chmod=700 ./nginx/tools/create_tls_cert.sh /root/
+
+[...]
+
+# Bonus
+COPY ./bonus/web/ ./web
+
+[...]
+~~~
+
+
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
 even if you rebuild

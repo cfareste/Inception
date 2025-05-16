@@ -36,7 +36,9 @@ services:
       - mariadb
   nginx:
     container_name: nginx
-    build: requirements/nginx
+    build:
+      context: ./requirements
+      dockerfile: ./nginx/Dockerfile
     volumes:
       - website:/var/www/html
     networks:
