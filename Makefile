@@ -19,6 +19,7 @@ PINK = \033[0;35m
 CYAN = \033[0;36m
 # ------------------ #
 
+
 # ---- # Vars # ---- #
 COPY = cp -rf
 RMV = rm -rf
@@ -38,12 +39,18 @@ WORDPRESS_DIR = $(REQS)wordpress/
 NGINX_DIR = $(REQS)nginx/
 ENV_FILE = $(SRCS).env
 YAML = $(SRCS)docker-compose.yml
-VOLUMES_PATH = /home/chris/42bcn/Inception/data/
-# VOLUMES_PATH = /home/cfidalgo/data/
 DATABASE_VOLUME = $(VOLUMES_PATH)database/
 WEBSITE_VOLUME = $(VOLUMES_PATH)website/
 
+ifeq ("$(HOME)", "/home/cfidalgo")
+	VOLUMES_PATH = /home/cfidalgo/data/
+else ifeq ("$(HOME)", "/home/chris")
+	VOLUMES_PATH = /home/chris/42bcn/Inception/data/
+else
+	VOLUMES_PATH = ./data/
+endif
 # ------------------ #
+
 
 # --- # Rules # ---- #
 all:
@@ -117,18 +124,20 @@ fclean: fdown
 
 # ------------------ #
 
+
 # --- # Extras # --- #
 .PHONY: all \
 		copy \
+		list \
 		up \
 		down \
 		fdown \
-		bldmariadb \
-		runmariadb \
-		dplmariadb \
-		excmariadb \
-		stpmariadb \
-		clnmariadb \
+		bld \
+		run \
+		dpl \
+		exc \
+		stp \
+		cln \
 		clean \
 		fclean
 
