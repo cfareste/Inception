@@ -42,12 +42,14 @@ YAML = $(SRCS)docker-compose.yml
 DATABASE_VOLUME = $(VOLUMES_PATH)database/
 WEBSITE_VOLUME = $(VOLUMES_PATH)website/
 
-ifeq ("$(HOME)", "/home/cfidalgo")
+EXEC_USER := $(or $(SUDO_USER),$(USER))
+
+ifeq ($(EXEC_USER), cfidalgo)
 	VOLUMES_PATH = /home/cfidalgo/data/
-else ifeq ("$(HOME)", "/home/chris")
+else ifeq ($(EXEC_USER), chris)
 	VOLUMES_PATH = /home/chris/42bcn/Inception/data/
 else
-	VOLUMES_PATH = /home/cfidalgo/data/
+	VOLUMES_PATH = ./data/
 endif
 # ------------------ #
 
