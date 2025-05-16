@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Tic ❌ Tac ⭕ Toe</title>
-	<link rel="stylesheet" href="style/index.css">
-	<script defer src="script/index.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="script/index.js"></script>
+    <link rel="stylesheet" href="style/index.css">
+    <title>Tic ❌ Tac ⭕ Toe</title>
 </head>
 <body>
-	<h1>Tic Tac Toe ❌⭕</h1>
-	<p>
-		Test!
-	</p>
-	<button id="testBtn" class="button">Click me!</button>
+    <main class="main-container">
+        <h1 class="title">Tic <span class="tac">Tac</span> Toe</h1>
+        <section id="board" class="board disabled">
+            <div id="cell-0" class="cell cell-0"></div>
+            <div id="cell-1" class="cell cell-1"></div>
+            <div id="cell-2" class="cell cell-2"></div>
+            <div id="cell-3" class="cell cell-3">Tic</div>
+            <div id="cell-4" class="cell cell-4">
+                <span class="tac">Tac</span>
+            </div>
+            <div id="cell-5" class="cell cell-5">Toe</div>
+            <div id="cell-6" class="cell cell-6"></div>
+            <div id="cell-7" class="cell cell-7"></div>
+            <div id="cell-8" class="cell cell-8"></div>
+        </section>
+        <button id="gameBtn" class="button">Start Game</button>
+    </main>
 </body>
 </html>
