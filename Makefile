@@ -47,7 +47,7 @@ ifeq ("$(HOME)", "/home/cfidalgo")
 else ifeq ("$(HOME)", "/home/chris")
 	VOLUMES_PATH = /home/chris/42bcn/Inception/data/
 else
-	VOLUMES_PATH = ./data/
+	VOLUMES_PATH = /home/cfidalgo/data/
 endif
 # ------------------ #
 

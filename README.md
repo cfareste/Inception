@@ -500,12 +500,13 @@ WORKDIR /var/www/html
 We see 2 errors: <br/>
 1. Undefined function mysqli_init(): <br/>
 https://serverfault.com/questions/971430/wordpress-php-uncaught-error-call-to-undefined-function-mysql-connect <br/>
-We need to install php-mysqli
+We need to install the minimum equired php extensions for wordpress to work properly, which includes php-mysqli: <br/>
+https://make.wordpress.org/hosting/handbook/server-environment/#php-extensions
 ~~~
 [...]
 
 RUN apt update && \
-    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli php-json
 
 [...]
 ~~~
@@ -524,7 +525,7 @@ Final result of Dockerfile:
 FROM debian:bullseye
 
 RUN apt update && \
-    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli php-json
 
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
@@ -613,7 +614,7 @@ Final result:
 FROM debian:bullseye
 
 RUN apt update && \
-    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli php-json
 
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
