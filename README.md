@@ -1139,6 +1139,138 @@ ENTRYPOINT [ "/root/init_nginx.sh" ]
 ~~~
 
 
+## Adminer
+Adminer is really similar to wordpress; a php file that dynamically represents a database <br/>
+https://en.wikipedia.org/wiki/Adminer <br/>
+https://www.adminer.org/en/ <br/>
+Adminer is just a php file, so it doesnt need installation, just download. We will download it with curl. <br/>
+To know its dependencies, we can execute apt show adminer | grep "Depends" (php-fpm and php-mysqli). <br/>
+The Dockerfile will be very similar to wordpress's one, since it works the same way
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends ca-certificates php-fpm php-mysqli curl
+
+COPY ./conf/adminer_pool.conf /etc/php/7.4/fpm/pool.d/adminer.conf
+
+RUN curl -o /root/adminer.php https://github.com/vrana/adminer/releases/download/v5.3.0/adminer-5.3.0.php
+
+RUN mkdir -p /run/php && \
+    chmod 777 /run/php
+
+COPY --chmod=700 ./tools/init_adminer.sh /root/
+
+WORKDIR /var/www/html
+
+EXPOSE 9000
+
+ENTRYPOINT [ "/root/init_adminer.sh" ]
+~~~
+The init_adminer.sh script:
+~~~
+#! /bin/bash
+
+copy_adminer_file()
+{
+    if [ -d ./adminer ]; then return 0; fi;
+
+    mkdir ./adminer
+    cp /root/adminer.php ./adminer/index.php
+}
+
+copy_adminer_file
+php-fpm7.4 -F
+~~~
+And the adminer_pool.conf:
+~~~
+[adminer]
+; User and group that will execute the pool of processes
+user = www-data
+group = www-data
+
+; What interfaces (IPs) and port should listen
+listen = 0.0.0.0:9000
+
+; How will fpm manage the pool processes: Dynamic means the number of
+; processes will fluctuate, but there will be at least one children
+pm = dynamic
+
+; Maximum of processes alive (in other words, maximum of requests handled at the same time)
+pm.max_children = 20
+
+; Number of processes at start
+pm.start_servers = 10
+
+; Minimum 'idle' processes (waiting for process). If there are less 'idle' processes than
+; this directive, some children processes will be created
+pm.min_spare_servers = 1
+
+; Maximum 'idle' processes (waiting for process). If there are more 'idle' processes than
+; this directive, some children processes will be killed
+pm.max_spare_servers = 15
+~~~
+
+
+This fails because curl doesn't follow redirections: <br/>
+https://askubuntu.com/questions/1036484/curl-o-stores-an-empty-file-though-wget-works-well
+~~~
+[...]
+
+RUN curl -L -o /root/adminer.php https://github.com/vrana/adminer/releases/download/v5.3.0/adminer-5.3.0.php
+
+[...]
+~~~
+
+Now we add a new service in docker-compose.yml, that uses the wordpress volume and both frontend and backend networks. <br/>
+~~~
+  [...]
+  adminer:
+    container_name: adminer
+    build: requirements/bonus/adminer
+    volumes:
+      - website:/var/www/html
+    networks:
+      - backend
+      - frontend
+    restart: always
+    depends_on:
+      - mariadb
+
+[...]
+~~~
+And also make nginx depend from adminer service:
+~~~
+    [...]
+    depends_on:
+      - wordpress
+      - adminer
+    [...]
+~~~
+
+Finally, we add a new location at the end of our nginx configuration to catch every .php request under /adminer/ path
+~~~
+    [...]
+
+    # BONUS: ADMINER
+    # Directive for every request that starts with /adminer/ and finishes with .php
+    location ~ ^/adminer/.*\.php$ {
+        # Check if php file exists; if not, error 404 not found
+        try_files $uri =404;
+
+        # Pass the .php files to the FPM listening on this address
+        fastcgi_pass adminer:9000;
+
+        # Include the necessary variables
+        include fastcgi.conf;
+    }
+}
+~~~
+
+
+
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
 even if you rebuild
+2. Do not copy files to volumes in the Dockerfiles (image build time), specially if that volume is shared between containers.
+You may end up erasing data when the volume is mounted on the containers

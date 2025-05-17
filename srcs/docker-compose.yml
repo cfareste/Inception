@@ -48,6 +48,18 @@ services:
     restart: always
     depends_on:
       - wordpress
+      - adminer
+  adminer:
+    container_name: adminer
+    build: requirements/bonus/adminer
+    volumes:
+      - website:/var/www/html
+    networks:
+      - backend
+      - frontend
+    restart: always
+    depends_on:
+      - mariadb
 
 networks:
   backend:
