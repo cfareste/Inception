@@ -13,5 +13,14 @@ create_tls_cert()
                 -subj "/C=SP/ST=Barcelona/L=Barcelona/O=42bcn/OU=42bcn/CN=cfidalgo.42.fr/emailAddress=cfidalgo@gmail.com"
 }
 
+# Bonus: Static website
+copy_web_files()
+{
+    if [ -d ./web ]; then return 0; fi;
+
+    cp -rf /root/web ./
+}
+
 create_tls_cert
+copy_web_files
 nginx -g 'daemon off;'

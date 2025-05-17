@@ -68,9 +68,9 @@ list:
 	@$(DOCKER) ps -a
 	@$(PRINT) "$(CYAN)Printing all $(YELLOW)images$(CYAN):$(RESET)"
 	@$(DOCKER) images -a
-	@$(PRINT) "$(CYAN)Printing all $(WHITE)volumes$(CYAN):$(RESET)"
+	@$(PRINT) "$(CYAN)Printing all $(YELLOW)volumes$(CYAN):$(RESET)"
 	@$(DOCKER) volume ls
-	@$(PRINT) "$(CYAN)Printing all $(WHITE)networks$(CYAN):$(RESET)"
+	@$(PRINT) "$(CYAN)Printing all $(YELLOW)networks$(CYAN):$(RESET)"
 	@$(DOCKER) network ls
 
 up:

@@ -222,6 +222,7 @@ https://docs.docker.com/reference/compose-file/ <br/>
 https://docs.docker.com/reference/compose-file/services/ <br/>
 https://docs.docker.com/reference/compose-file/build/ <br/>
 https://docs.docker.com/reference/compose-file/volumes/ <br/>
+https://docs.docker.com/engine/storage/volumes/#mounting-a-volume-over-existing-data <br/>
 https://docs.docker.com/engine/extend/legacy_plugins/ <br/>
 https://docs.docker.com/reference/compose-file/networks/ <br/>
 
@@ -1076,17 +1077,37 @@ CSS:
 	color: white;
 }
 ~~~
-Then, in our nginx Dockerfile:
+Then, in our nginx Dockerfile, we need to copy the web files to the container. But, because volumes erase
+any data that was in the directory, we need to copy it first to a non-mounted directory and move the files 
+on the entrypoint: <br/>
+https://docs.docker.com/engine/storage/volumes/#mounting-a-volume-over-existing-data
 ~~~
 [...]
 
 WORKDIR /var/www/html
 
-# Bonus
-COPY ../bonus/web/ ./web
+# Bonus: Static website
+COPY ../bonus/web/ /root/web
 
 [...]
 ~~~
+And on the script (rename it from create_tls_cert.sh to init_nginx.sh)
+~~~
+[...]
+
+# Bonus: Static website
+copy_web_files()
+{
+    if [ -d ./web ]; then return 0; fi;
+
+    cp -rf /root/web ./
+}
+
+create_tls_cert
+copy_web_files
+nginx -g 'daemon off;'
+~~~
+
 This fails because it can't find /bonus/web. That is caused by the Dockerfile context (srcs/requirements/nginx. Here,
 it doesnt exist bonus/web). We can't go before that context. So for make it work we need to specify a context in the docker-compose.yml: <br/>
 https://stackoverflow.com/questions/24537340/docker-adding-a-file-from-a-parent-directory
@@ -1099,7 +1120,7 @@ https://stackoverflow.com/questions/24537340/docker-adding-a-file-from-a-parent-
       dockerfile: ./nginx/Dockerfile
 [...]
 ~~~
-And now, we need to change every path (mostly de COPY's ones) to the according context in the nginx Dockerfile
+And now, we need to change every path (mostly de COPY's ones) to the according context in the nginx Dockerfile (and change the script name)
 ~~~
 [...]
 
@@ -1107,14 +1128,14 @@ COPY ./nginx/conf/inception_server.conf /etc/nginx/sites-available/
 
 [...]
 
-COPY --chmod=700 ./nginx/tools/create_tls_cert.sh /root/
+COPY --chmod=700 ./nginx/tools/init_nginx.sh /root/
 
 [...]
 
-# Bonus
-COPY ./bonus/web/ ./web
+# Bonus: Static website
+COPY ./bonus/web/ /root/web
 
-[...]
+ENTRYPOINT [ "/root/init_nginx.sh" ]
 ~~~
 
 
