@@ -1,7 +1,7 @@
 FROM debian:bullseye
 
 RUN apt update && \
-    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli php-json
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli php-json php-redis
 
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \

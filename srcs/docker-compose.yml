@@ -23,6 +23,7 @@ services:
     networks:
       - wordpress_backend
       - wordpress_frontend
+      - redis
     secrets:
       - database_name
       - database_user_name
@@ -35,6 +36,7 @@ services:
     restart: always
     depends_on:
       - mariadb
+      - redis
   nginx:
     container_name: nginx
     build:
@@ -51,6 +53,13 @@ services:
     depends_on:
       - wordpress
       - adminer
+  redis:
+    container_name: redis
+    build: requirements/bonus/redis
+    networks:
+      - redis
+    env_file: .env
+    restart: always
   adminer:
     container_name: adminer
     build: requirements/bonus/adminer
@@ -67,6 +76,8 @@ networks:
   wordpress_frontend:
     driver: bridge
   wordpress_backend:
+    driver: bridge
+  redis:
     driver: bridge
   adminer_frontend:
     driver: bridge

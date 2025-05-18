@@ -1039,6 +1039,173 @@ install_and_configure_wordpress()
 
 
 # Bonus
+## Redis cache for Wordpress
+Redis is a NoSQL in-memory database used primarly as a cache app. It can be use in different ways, but with wordpress is used to speed up the
+pages loading times. It saves in cache the database queries, so next time the same query is requested (same admin-panel, or same post), it will 
+build the page with cache info, and will be a lot faster. It also solves some problems of the default cache plugins <br/>
+https://www.ibm.com/think/topics/redis <br/>
+https://wetopi.com/redis-object-cache-for-wordpress/ <br/>
+We start with a simple Dockerfile: <br/>
+https://themeisle.com/blog/wordpress-redis-cache <br/>
+https://stackoverflow.com/questions/14816892/how-to-keep-redis-server-running <br/>
+As docker needs a foreground process, use --daemonize no (daemonize yes its default)
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends redis-server
+
+EXPOSE 6379
+
+ENTRYPOINT [ "redis-server", "--daemonize", "no" ]
+~~~
+Now if we enter in the container and execute redis-cli ping, we should get PONG <br/>
+
+Now we create the config file for the redis-server to work with our wordpress container <br/>
+https://redis.io/learn/operate/redis-at-scale/talking-to-redis/configuring-a-redis-server <br/>
+https://raw.githubusercontent.com/redis/redis/6.0/redis.conf
+~~~
+# Listen to any address on port 6379
+bind 0.0.0.0
+port 6379
+
+# Run redis-server in protected-mode, to prevent dangerous connections (listening to 0.0.0.0 without password)
+protected-mode yes
+
+# Disable timeout kick for redis clients
+timeout 0
+
+# Execute redis-server in foreground, so docker can grant it PID 1
+daemonize no
+
+# Ensure redis doesn't interact with the supervision tree (systemd)
+supervised no
+
+# Defines how verbose is redis with its logs
+loglevel notice
+
+# Print logs to standard output
+logfile ""
+
+# Number of databases
+databases 16
+
+# Save changes every 300 seconds (5 minutes) if at least 1 key is changed
+save 300 1
+
+# Name of the db file and the directory where its gonna be stored
+dbfilename inception_dump.rdb
+dir /etc/redis/inception
+~~~
+
+Now, we modify the redis Dockerfile to add the configuration file. As we wrote the "daemonize no" directive in the
+configuration file, there is no need to pass it as argument to redis-server anymore:
+~~~
+[...]
+
+COPY ./conf/redis_cache.conf /etc/redis/inception/inception.conf
+
+[...]
+
+ENTRYPOINT [ "redis-server", "/etc/redis/inception/inception.conf" ]
+~~~
+
+Then, we modify our docker-compose.yml to add the new redis service:
+~~~
+services:
+  mariadb:
+    [...]
+  wordpress:
+    [...]
+    networks:
+      - backend
+      - frontend
+      - redis
+    [...]
+    depends_on:
+      - mariadb
+      - redis
+  nginx:
+    [...]
+  redis:
+    container_name: redis
+    build: requirements/bonus/redis
+    networks:
+      - redis
+    env_file: .env
+    restart: always
+
+networks:
+  [...]
+  redis:
+    driver: bridge
+
+[...]
+~~~
+
+Finally, we will install the redis-cache wordpress plugin via wp-cli <br/>
+https://wordpress.org/plugins/redis-cache/  <br/>
+https://github.com/rhubarbgroup/redis-cache/blob/develop/INSTALL.md <br/>
+https://github.com/rhubarbgroup/redis-cache/#configuration <br/>
+https://developer.wordpress.org/cli/commands/plugin/install/ <br/>
+First, install the redis php extension in the wordpress Dockerfile
+~~~
+[...]
+
+RUN apt update && \
+    apt install -y --no-install-recommends php-fpm curl ca-certificates php-mysqli php-json php-redis
+
+[...]
+~~~
+And on init_wordpress.sh:
+https://developer.wordpress.org/cli/commands/plugin/is-installed/
+~~~
+[...]
+
+# Bonus: Install and configure redis-cache plugin
+install_and_configure_redis_plugin()
+{
+    # Check if redis-cache plugin is installed
+    wp plugin is-installed redis-cache --allow-root
+    
+    # If the last command returns 0, means is installed, so return
+    if [ $? -eq 0 ]; then return 0; fi;
+
+    # Install plugin
+    wp plugin install redis-cache --activate --allow-root
+    
+    # Set redis configurations in wp-config.php
+    wp config set WP_REDIS_HOST "redis" --allow-root
+    wp config set WP_REDIS_PORT "6379" --allow-root
+    wp config set WP_REDIS_PREFIX "inception" --allow-root
+    wp config set WP_REDIS_DATABASE "0" --allow-root
+    wp config set WP_REDIS_TIMEOUT "1" --allow-root
+    wp config set WP_REDIS_READ_TIMEOUT "1" --allow-root
+
+    # Enable object cache
+    wp redis enable --allow-root
+}
+
+install_and_configure_wordpress
+install_and_configure_redis_plugin
+php-fpm7.4 -F
+~~~
+
+This works. But if you go to the plugins site on your wordpress admin panel, you can see its not writeable.
+This is because the php-fpm is executed as www-data user, but the /var/www/html is created by root. We need to change
+the permissons of the /var/www/html directory:
+https://wordpress.org/support/topic/redis-object-cache-filesystem-not-writeable-fault/
+~~~
+[...]
+
+install_and_configure_wordpress
+install_and_configure_redis_plugin
+chown -R www-data:www-data ./ && chmod -R 750 ./
+php-fpm7.4 -F
+~~~
+Now it fully works
+
+
 ## Static website
 https://blog.hubspot.com/website/static-vs-dynamic-website <br/>
 Create a simple static website in any language except PHP. We will use HTML, CSS and Javascript <br/>
@@ -1261,12 +1428,18 @@ services:
     networks:
       - wordpress_backend
       - wordpress_frontend
+      - redis
     [...]
   nginx:
     [...]
     networks:
       - wordpress_frontend
       - adminer_frontend
+    [...]
+  redis:
+    [...]
+    networks:
+      - redis
     [...]
   adminer:
     [...]
@@ -1279,6 +1452,8 @@ networks:
   wordpress_frontend:
     driver: bridge
   wordpress_backend:
+    driver: bridge
+  redis:
     driver: bridge
   adminer_frontend:
     driver: bridge
