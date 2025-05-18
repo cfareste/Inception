@@ -7,7 +7,8 @@ services:
     volumes:
       - database:/var/lib/mysql
     networks:
-      - backend
+      - wordpress_backend
+      - adminer_backend
     secrets:
       - database_name
       - database_user_name
@@ -20,8 +21,8 @@ services:
     volumes:
       - website:/var/www/html
     networks:
-      - backend
-      - frontend
+      - wordpress_backend
+      - wordpress_frontend
     secrets:
       - database_name
       - database_user_name
@@ -42,7 +43,8 @@ services:
     volumes:
       - website:/var/www/html
     networks:
-      - frontend
+      - wordpress_frontend
+      - adminer_frontend
     ports:
       - "443:443"
     restart: always
@@ -55,16 +57,20 @@ services:
     volumes:
       - website:/var/www/html
     networks:
-      - backend
-      - frontend
+      - adminer_backend
+      - adminer_frontend
     restart: always
     depends_on:
       - mariadb
 
 networks:
-  backend:
+  wordpress_frontend:
     driver: bridge
-  frontend:
+  wordpress_backend:
+    driver: bridge
+  adminer_frontend:
+    driver: bridge
+  adminer_backend:
     driver: bridge
 
 volumes:

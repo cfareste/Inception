@@ -1211,7 +1211,6 @@ pm.min_spare_servers = 1
 pm.max_spare_servers = 15
 ~~~
 
-
 This fails because curl doesn't follow redirections: <br/>
 https://askubuntu.com/questions/1036484/curl-o-stores-an-empty-file-though-wget-works-well
 ~~~
@@ -1231,21 +1230,62 @@ Now we add a new service in docker-compose.yml, that uses the wordpress volume a
     volumes:
       - website:/var/www/html
     networks:
-      - backend
-      - frontend
+      - adminer_backend
+      - adminer_frontend
     restart: always
     depends_on:
       - mariadb
 
 [...]
 ~~~
-And also make nginx depend from adminer service:
+Make nginx depend from adminer service:
 ~~~
     [...]
     depends_on:
       - wordpress
       - adminer
     [...]
+~~~
+We also need to create a new pair of networks, adminer_frontend and adminer_backend (and rename backend and frontend
+networks to wordpress_backend and wordpress_frontend)
+~~~
+services:
+  mariadb:
+    [...]
+    networks:
+      - wordpress_backend
+      - adminer_backend
+    [...]
+  wordpress:
+    [...]
+    networks:
+      - wordpress_backend
+      - wordpress_frontend
+    [...]
+  nginx:
+    [...]
+    networks:
+      - wordpress_frontend
+      - adminer_frontend
+    [...]
+  adminer:
+    [...]
+    networks:
+      - adminer_backend
+      - adminer_frontend
+    [...]
+
+networks:
+  wordpress_frontend:
+    driver: bridge
+  wordpress_backend:
+    driver: bridge
+  adminer_frontend:
+    driver: bridge
+  adminer_backend:
+    driver: bridge
+
+[...]
 ~~~
 
 Finally, we add a new location at the end of our nginx configuration to catch every .php request under /adminer/ path
