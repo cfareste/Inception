@@ -60,6 +60,21 @@ services:
       - redis
     env_file: .env
     restart: always
+  ftp:
+    container_name: ftp
+    build: requirements/bonus/ftp
+    volumes:
+      - website:/var/www/html
+    ports:
+      - "21:21"
+      - "49152-49162:49152-49162"
+    restart: always
+    secrets:
+      - ftp_user
+      - ftp_password
+    env_file: .env
+    depends_on:
+      - wordpress
   adminer:
     container_name: adminer
     build: requirements/bonus/adminer
@@ -113,3 +128,7 @@ secrets:
     file: ${WEBSITE_ADMIN_USER_SECRET_PATH}
   website_author_password:
     file: ${WEBSITE_AUTHOR_PASSWORD_SECRET_PATH}
+  ftp_user:
+    file: ${FTP_USER_SECRET_PATH}
+  ftp_password:
+    file: ${FTP_PASSWORD_SECRET_PATH}

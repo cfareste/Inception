@@ -44,5 +44,5 @@ install_and_configure_redis_plugin()
 
 install_and_configure_wordpress
 install_and_configure_redis_plugin
-chown -R www-data:www-data ./ && chmod -R 750 ./
+chown -R www-data:www-data ./ && chmod -R 755 ./
 php-fpm7.4 -F

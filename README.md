@@ -1200,10 +1200,142 @@ https://wordpress.org/support/topic/redis-object-cache-filesystem-not-writeable-
 
 install_and_configure_wordpress
 install_and_configure_redis_plugin
-chown -R www-data:www-data ./ && chmod -R 750 ./
+chown -R www-data:www-data ./ && chmod -R 755 ./
 php-fpm7.4 -F
 ~~~
 Now it fully works
+
+
+## FTP server
+A FTP server is a program that serves files using file transport protocol <br/> 
+https://en.wikipedia.org/wiki/File_Transfer_Protocol <br/>
+https://documentation.ubuntu.com/server/how-to/networking/ftp/index.html <br/>
+https://www.mvps.net/docs/what-is-vsftpd-or-very-secure-ftp-daemon/ <br/>
+https://linux.die.net/man/8/vsftpd <br/>
+https://www.jscape.com/blog/active-v-s-passive-ftp-simplified <br/>
+https://www.plesk.com/kb/support/how-to-configure-the-passive-ports-range-for-proftpd-on-a-plesk-server-behind-a-firewall/ <br/>
+We will use vsftpd with pasive mode. We Lets start with the Dockerfile, copying the configuration file and the script directly
+~~~
+FROM debian:bullseye
+
+RUN apt update && \
+    apt install -y --no-install-recommends vsftpd
+
+COPY ./conf/ftp.conf /etc/vsftpd/ftp_inception.conf
+
+COPY --chmod=700 tools/init_ftp.sh /root/init_ftp.sh
+
+RUN mkdir -p /run/vsftpd/empty
+
+WORKDIR /var/www/html
+
+EXPOSE 21
+EXPOSE 49152-49162
+
+ENTRYPOINT [ "/root/init_ftp.sh" ]
+~~~
+Then create the configuration file: <br/>
+http://ftp.pasteur.fr/mirrors/centos-vault/3.6/docs/html/rhel-rg-en-3/s1-ftp-vsftpd-conf.html <br/>
+https://askubuntu.com/questions/413677/vsftpd-530-login-incorrect
+~~~
+# Run vsftpd in standalone mode (doesnt need a superdaemon to accept connections)
+# And prevent to run it as a daemon (so docker can track it with PID 1)
+listen=YES
+background=NO
+
+# Deny anonymous users (connections without user and password) and enable local users
+anonymous_enable=NO
+local_enable=YES
+
+# Root of the server
+local_root=/var/www/html/files
+
+# Enable write operations, like delete, rename... on the files AND the server root
+write_enable=YES
+allow_writeable_chroot=YES
+
+# Set de permissions mask. This mask will substract permissions from de uploaded files (in this
+# case, 777 - 033 = 744, so we have all permissions an others only read)
+local_umask=033
+
+# Use PC localtime when listing directories
+use_localtime=YES
+
+# Activate logging of uploads/downloads.
+xferlog_enable=YES
+
+# Security mesures. Jail the user to the server root (/var/www/html/files)
+# And an empty directory for jailing securities
+chroot_local_user=YES
+secure_chroot_dir=/var/run/vsftpd/empty
+
+# The name of the PAM service vsftpd will use (in /etc/pam.d/).
+pam_service_name=vsftpd
+
+# Prevent from using active mode
+connect_from_port_20=NO
+
+# Use passive mode connection, with the minimum and maximum port and the address
+pasv_enable=YES
+pasv_min_port=49152
+pasv_max_port=49162
+pasv_address=127.0.0.1
+~~~
+And we create the init_ftp.sh script:
+~~~
+#! /bin/bash
+
+create_ftpuser()
+{
+    local FTP_USER=$(cat $SECRETS_PREFIX/ftp_user)
+    local FTP_PASSWORD=$(cat $SECRETS_PREFIX/ftp_password)
+
+    if [ ! -z "$(cat /etc/passwd | grep $FTP_USER)" ]; then return 0; fi
+
+    useradd -s /bin/bash -m $FTP_USER
+    echo "$FTP_USER":"$FTP_PASSWORD" | chpasswd
+}
+
+create_files_directory()
+{
+    local FTP_USER=$(cat $SECRETS_PREFIX/ftp_user)
+
+    mkdir -p ./files && chown -R "$FTP_USER":"$FTP_USER" ./files
+}
+
+create_ftpuser
+create_files_directory
+vsftpd /etc/vsftpd/ftp_inception.conf
+~~~
+
+Finally, add the new service to docker-compose.yml and the new secrets
+~~~
+services:
+  [...]
+  ftp:
+    container_name: ftp
+    build: requirements/bonus/ftp
+    volumes:
+      - website:/var/www/html
+    ports:
+      - "21:21"
+      - "49152-49162:49152-49162"
+    restart: always
+    secrets:
+      - ftp_user
+      - ftp_password
+    env_file: .env
+    depends_on:
+      - wordpress
+  [...]
+
+secrets:
+  [...]
+  ftp_user:
+    file: ${FTP_USER_SECRET_PATH}
+  ftp_password:
+    file: ${FTP_PASSWORD_SECRET_PATH}
+~~~
 
 
 ## Static website
@@ -1440,6 +1572,8 @@ services:
     [...]
     networks:
       - redis
+    [...]
+  ftp:
     [...]
   adminer:
     [...]
