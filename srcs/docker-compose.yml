@@ -37,6 +37,7 @@ services:
     depends_on:
       - mariadb
       - redis
+      - init-volumes
   nginx:
     container_name: nginx
     build:
@@ -53,6 +54,15 @@ services:
     depends_on:
       - wordpress
       - adminer
+  init-volumes:
+    container_name: init-volumes
+    build: requirements/bonus/init-volumes
+    volumes:
+      - website:/var/www/html
+    secrets:
+      - ftp_user
+    env_file: .env
+    restart: no
   redis:
     container_name: redis
     build: requirements/bonus/redis
@@ -68,13 +78,13 @@ services:
     ports:
       - "21:21"
       - "49152-49162:49152-49162"
-    restart: always
     secrets:
       - ftp_user
       - ftp_password
     env_file: .env
+    restart: always
     depends_on:
-      - wordpress
+      - init-volumes
   adminer:
     container_name: adminer
     build: requirements/bonus/adminer
@@ -86,6 +96,7 @@ services:
     restart: always
     depends_on:
       - mariadb
+      - init-volumes
 
 networks:
   wordpress_frontend:

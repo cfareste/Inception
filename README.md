@@ -1617,9 +1617,189 @@ Finally, we add a new location at the end of our nginx configuration to catch ev
 ~~~
 
 
+## Custom service: Volume initializer
+To prevent changing volume permissions in every container and getting errors due to that, we create a
+container that initializes the website volume with the necessary permissions<br/>
+Dockerfile:
+~~~
+FROM debian:bullseye
+
+COPY --chmod=700 ./tools/init_volumes.sh /root/init_volumes.sh
+
+WORKDIR /var/www/html
+
+ENTRYPOINT [ "/root/init_volumes.sh" ]
+~~~
+We add it to the docker-compose.yml, and make the necessary services be dependant of this new service.
+This time, the container wont be restarting always. It will only execute one time
+~~~
+services:
+  mariadb:
+    [...]
+  wordpress:
+    [...]
+    depends_on:
+      - mariadb
+      - redis
+      - init-volumes
+  nginx:
+    [...]
+  init-volumes:
+    container_name: init-volumes
+    build: requirements/bonus/init-volumes
+    volumes:
+      - website:/var/www/html
+    secrets:
+      - ftp_user
+    env_file: .env
+    restart: no
+  redis:
+    [...]
+  ftp:
+    [...]
+    depends_on:
+      - init-volumes
+  adminer:
+    [...]
+    depends_on:
+      - mariadb
+      - init-volumes
+~~~
+We create the init_volumes.sh script, where we give the permissions to the volume and create the necessary
+directories (adminer and files) with the necessary permissions:
+~~~
+#!/bin/bash
+
+create_adminer_directory()
+{
+    mkdir -p ./adminer
+    chown -R www-data:www-data ./adminer
+    chmod -R 2755 ./adminer
+}
+
+create_ftp_directory()
+{
+    local FTP_USER=$(cat $SECRETS_PREFIX/ftp_user)
+
+    if [ -z "$(cat /etc/passwd | grep $FTP_USER)" ]
+    then
+        useradd -s /bin/bash -m $FTP_USER
+    fi
+
+    mkdir -p ./files
+    chown -R "$FTP_USER":"www-data" ./files
+    chmod -R 2755 ./files
+}
+
+change_root_owner()
+{
+    chown -R www-data:www-data ./
+    chmod -R 755 ./
+}
+
+change_root_owner
+create_adminer_directory
+create_ftp_directory
+~~~
+
+This gives us the chance to clean the other services and centralize the permissions here. <br/>
+In init_adminer.sh, we no longer need to create the adminer folder, neither give it permissions. Just copy the files
+(preserving the folder ownership, www-data)
+~~~
+#! /bin/bash
+
+copy_adminer_file()
+{
+    if [ -f ./adminer/index.php ]; then return 0; fi;
+
+    cp --no-preserve=ownership /root/adminer.php ./adminer/index.php
+}
+
+copy_adminer_file
+php-fpm7.4 -F
+~~~
+In init_ftp.sh, we can eliminate "create_files_directory" function:
+~~~
+#! /bin/bash
+
+create_ftpuser()
+{
+    local FTP_USER=$(cat $SECRETS_PREFIX/ftp_user)
+    local FTP_PASSWORD=$(cat $SECRETS_PREFIX/ftp_password)
+
+    if [ ! -z "$(cat /etc/passwd | grep $FTP_USER)" ]; then return 0; fi
+
+    useradd -s /bin/bash -m $FTP_USER
+    echo "$FTP_USER":"$FTP_PASSWORD" | chpasswd
+}
+
+create_ftpuser
+vsftpd /etc/vsftpd/ftp_inception.conf
+~~~
+And in init_wordpress.sh, we will execute the commands as www-data using su. So bye bye to --allow-root, and
+bye bye to changing ownership and permissions:
+~~~
+#! /bin/bash
+
+# Bonus: init-volumes service
+execute_as_www_data()
+{
+    # Execute as www-data every wp command using bash
+    su -s /bin/bash www-data -c "$1"
+}
+
+install_and_configure_wordpress()
+{
+    if [ -f wp-config.php ]; then return 0; fi
+
+    local DATABASE_NAME=$(cat $SECRETS_PREFIX/database_name)
+    local DATABASE_USER_NAME=$(cat $SECRETS_PREFIX/database_user_name)
+    local DATABASE_USER_PASSWORD=$(cat $SECRETS_PREFIX/database_user_password)
+    local WEBSITE_ADMIN_USER=$(cat $SECRETS_PREFIX/website_admin_user)
+    local WEBSITE_ADMIN_PASSWORD=$(cat $SECRETS_PREFIX/website_admin_password)
+    local WEBSITE_ADMIN_EMAIL=$(cat $SECRETS_PREFIX/website_admin_email)
+    local WEBSITE_AUTHOR_PASSWORD=$(cat $SECRETS_PREFIX/website_author_password)
+
+    execute_as_www_data "wp core download"
+    execute_as_www_data "wp config create --dbname=$DATABASE_NAME --dbuser=$DATABASE_USER_NAME --dbpass=$DATABASE_USER_PASSWORD --dbhost=$DATABASE_HOST"
+    execute_as_www_data "wp core install --url=$DOMAIN_NAME --title=$WEBSITE_TITLE --admin_user=$WEBSITE_ADMIN_USER --admin_password=$WEBSITE_ADMIN_PASSWORD --admin_email=$WEBSITE_ADMIN_EMAIL --skip-email"
+    execute_as_www_data "wp user create $WEBSITE_AUTHOR_USER $WEBSITE_AUTHOR_EMAIL --role=author --user_pass=$WEBSITE_AUTHOR_PASSWORD"
+}
+
+# Bonus: Install and configure redis-cache plugin
+install_and_configure_redis_plugin()
+{
+    # Check if redis-cache plugin is installed
+    execute_as_www_data "wp plugin is-installed redis-cache"
+    
+    # If the last command returns 0, means is installed, so return
+    if [ $? -eq 0 ]; then return 0; fi;
+
+    # Install plugin
+    execute_as_www_data "wp plugin install redis-cache --activate"
+    
+    # Set redis configurations in wp-config.php
+    execute_as_www_data "wp config set WP_REDIS_HOST \"redis\""
+    execute_as_www_data "wp config set WP_REDIS_PORT \"6379\""
+    execute_as_www_data "wp config set WP_REDIS_PREFIX \"inception\""
+    execute_as_www_data "wp config set WP_REDIS_DATABASE \"0\""
+    execute_as_www_data "wp config set WP_REDIS_TIMEOUT \"1\""
+    execute_as_www_data "wp config set WP_REDIS_READ_TIMEOUT \"1\""
+
+    # Enable object cache
+    execute_as_www_data "wp redis enable"
+}
+
+install_and_configure_wordpress
+install_and_configure_redis_plugin
+php-fpm7.4 -F
+~~~
+
 
 # TIPS
 1. When debugging, remember to delete the physical volumes (/home/xxx/data), as the persisted data can show you fake results
 even if you rebuild
 2. Do not copy files to volumes in the Dockerfiles (image build time), specially if that volume is shared between containers.
 You may end up erasing data when the volume is mounted on the containers
+3. From time to time, build without cache (remove images and build, or build --no-cache). There can be some configurations that
+show fake results between builds

@@ -2,10 +2,9 @@
 
 copy_adminer_file()
 {
-    if [ -d ./adminer ]; then return 0; fi;
+    if [ -f ./adminer/index.php ]; then return 0; fi;
 
-    mkdir ./adminer
-    cp /root/adminer.php ./adminer/index.php
+    cp --no-preserve=ownership /root/adminer.php ./adminer/index.php
 }
 
 copy_adminer_file
