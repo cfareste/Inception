@@ -1,8 +1,23 @@
 # Inception
-A small application infrastructure using Docker and Docker compose
+### A 42-school project designated to create an application infrastructure using Docker and Docker compose
+In this essay, I wrote down a walkthrough of the Inception project; an exercise focused on building a modular application using Docker and Docker Compose. The goal of the project is to deepen your understanding of containerization by setting up an environment composed of several services.
+
+This document serves as a complete guide, walkthrough and documentation about the project, including:
+- Explanations of the key theoretical concepts needed to solve the project.
+- Step-by-step instructions to set up each component of the infrastructure.
+- All the project bonuses and their solutions / explanations.
+- Errors encountered during the implementation, and their solution.
+- All external resources that helped resolve the project.
+- Useful tips to complete the project and troubleshoot it.
+
+Whether you're just starting the project or looking to set up some trobulesome service, you can find the solution here. <br/>
+This is the project's infrastructure that we will achieve at the end of the project:
+
+![Inception infrastructure](https://github.com/user-attachments/assets/8177d9a1-82d8-4e28-8e48-d02189a92a91)
 
 # PID 1 in docker
 https://github.com/antontkv/docker-and-pid1
+
 
 # How does Nginx + php-fpm + WordPress ecosystem works
 What really is wordpress and how it works: https://en.wikipedia.org/wiki/WordPress <br/>
