@@ -10,10 +10,62 @@ This document serves as a complete guide, walkthrough and documentation about th
 - All external resources that helped resolve the project.
 - Useful tips to complete the project and troubleshoot it.
 
-Whether you're just starting the project or looking to set up some trobulesome service, you can find the solution here. <br/>
+Whether you are just starting the project or looking to set up some trobulesome service, you can find the solution here. <br/>
 This is the project's infrastructure that we will achieve at the end of the project:
 
 ![Inception infrastructure](https://github.com/user-attachments/assets/8177d9a1-82d8-4e28-8e48-d02189a92a91)
+
+## Index
+
+
+## Concepts
+### Docker
+#### What is Docker
+#### How Docker works
+#### VM vs Docker
+#### Dockerfile
+##### Common instructions (FROM, RUN...)
+#### Why is PID 1 important
+### Docker Compose
+#### What is Docker Compose
+#### Differences between using only Docker or Docker Compose
+#### The compose file
+##### Top level instructions (version, name, services, volumes, networks, configs and secrets)
+### Inception's infrastructure
+#### MariaDB
+#### PHP-FPM
+##### What is a CGI
+##### How does a CGI work
+##### Differences between CGI and FastCGI
+##### What is PHP-FPM
+#### Wordpress
+##### How does wordpress work with a CGI (PHP-FPM)
+#### Nginx + TLS
+##### What is Nginx and how does it work
+##### What is SSL and TLS
+##### How does it work
+##### Things you need to know (RSA)
+#### Adminer
+#### Redis
+##### What means to use cache in a website
+##### Why is useful to use cache in a website
+##### What is redis object cache
+#### FTP server
+##### What is FTP
+##### How does FTP work
+## Walkthrough
+### MariaDB
+### Starting the compose file
+### Wordpress and php-fpm
+### Nginx
+### Bonus
+#### Redis cache
+#### FTP server
+#### Static web
+#### Adminer
+#### Custom service (Volume initializer)
+## Useful tips
+## Sources
 
 # PID 1 in docker
 https://github.com/antontkv/docker-and-pid1
