@@ -26,71 +26,46 @@ This is the project's infrastructure that we will achieve at the end of the proj
 
 
 ## 1. Concepts
-In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all
-the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
+In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
 
 ### 1.1 Docker
 #### 1.1.1 What is Docker? 🐳📦:
-Docker is a software platform that automates the deployment of applications. Docker creates lightweight isolated environments called `containers`, separating
-them from your infrastructure (host machine). A `container` is an environment with OS-level virtualization and applications running, isolated from the host machine
-(see [1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker)). <br/>
-To understand why Docker is really powerful, let's imagine you have built a Java application using Java 17 in your Debian environment. All works as expected.
-You are really proud of your work, so you want to share your feats with your partners. They clone the repo and try to use your application, but, oh no,
-surprise, it does not even compile. Why? Because they do not use Debian, but Ubuntu (some environment variables changed). Moreover, they do not even have
-Java 17 installed on their PC, but Java 12, and your application does not work properly. This is a classical problem known as "It works on my machine". <br/>
-Here is where Docker helps us. Using Docker, you can create an isolated environment for your application, with the operating system and the system requirements
-that you need (Debian and Java 17 in our case). You would build a Debian container, install Java 17 on it, and copy your application files inside of it. Then,
-you would execute your container, and you would have your application running smoothly, as it isolates itself from the host machine (so it does not share neither
-the operating system nor system requirements).
+Docker is a software platform that automates the deployment of applications. Docker creates lightweight isolated environments called `containers`, separating them from your infrastructure (host machine). A `container` is an environment with OS-level isolation and applications running, independent from the host machine (see section [1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker)). <br/>
+To understand why Docker is really powerful, let's imagine you have built a Java application using Java 17 in your Debian environment. All works as expected. You are really proud of your work, so you want to share your feats with your partners. They clone the repo and try to use your application, but, oh no, surprise, it does not even compile. Why? Because they do not use Debian, but Ubuntu (some environment variables changed). Moreover, they do not even have Java 17 installed on their PC, but Java 12, and your application fails to run correctly. This is a classical problem known as "It works on my machine". <br/>
+Here is where Docker comes in handy . Using Docker, you can create an isolated environment for your application, with the operating system and the system requirements that you need (Debian and Java 17 in our case). You would build a Debian container, install Java 17 on it, and copy your application files inside of it. Then, you would execute your container, and you would have your application running smoothly, as it isolates itself from the host machine (so it does not share neither the operating system nor system requirements).
 
 #### 1.1.2 How does Docker work? 💻🔧:
-Docker is more than just a program; it's a software platform. It uses a client-server architecture, where the client sends requests to the server (host) via an API REST,
-and the server process them. Under the hood, we can differentiate 3 key components: The docker client, the docker host and the docker registry.
-1. Docker client: The docker client is a CLI (Command Line Interpreter) program. It's the program that you, as a user, would interact with to manage all the
-docker-related operations, such as building images, executing containers, and more. With it, you can execute commands like `docker run`, `docker build`,
-`docker pull`... Docker Compose has its own client, `docker compose`, but we will talk about it later.
-2. Docker host: The docker host is the server-side of Docker. It contains the images, containers, and most important, the docker daemon `dockerd`. The docker daemon
-is the background program that listens to the docker client API requests. When a user executes a command (for example, `docker pull`) with the docker client, it sends
-an API request that `dockerd` listens to, and then it does the necessary operations (in our example, pulls an image from the requested registry).
-3. Docker registry: The docker registry is just a place with docker images stored. In a docker registry, you can pull created images, like Debian or Ubuntu base images,
-or push your own built images. Docker Hub is the official public docker registry. By default, the docker daemon pulls / pushes images from it when requested with the `FROM`
-keyword, but you can configure it so it pulls / pushes images to your own private registry.
+Docker is more than just a program; it's a software platform. It uses a client-server architecture, where the client sends requests to the server (Docker Host) via a REST API, and the server processes them. Under the hood, we can differentiate 3 key components: The Docker Client, the Docker Host and the Docker Registry.
+1. Docker Client: The Docker Client is a CLI (Command Line Interface) program. It's the program that you, as a user, would interact with to manage all the docker-related operations, such as building images, executing containers, and more. With it, you can execute commands like `docker run`, `docker build`, `docker pull`... Docker Compose has its own CLI tool, `docker compose`, which we will cover later.
+2. Docker Host: The Docker Host is the server-side of Docker. It contains the images, containers, and most important, the Docker Daemon `dockerd`, a background service that listens to the Docker Client API requests. When a user executes a command (for example, `docker pull`) with the Docker Client, it sends an API request that `dockerd` listens to, and then it does the necessary operations (in our example, pulls an image from the requested registry).
+3. Docker Registry: The Docker Registry is just a storage for Docker images. In a Docker Registry, you can pull created images, like Debian or Ubuntu base images, or push your own built images. Docker Hub is the official public Docker Registry. By default, the docker daemon pulls / pushes images from it when requested with the `FROM` keyword, but you can configure it so it pulls / pushes images to your own private registry.
 
-The docker host (server-side of docker) can be on the same host as the client, but also can be in different hosts. With your docker client, you can execute docker operations
-on a remote host via a TCP connection.
+The Docker Host (server-side of docker) can be on the same host machine as the client, but also can be in a different one. With your Docker Client, you can execute docker operations on a remote host machine via a TCP connection.
 
 ![Docker architecture](https://github.com/user-attachments/assets/2273b38b-c7aa-440e-85ee-19ad2ecd9be2)
 
 To work with Docker, we will use 3 different elements: the Dockerfile, a Docker image and a Docker container.
-1. Dockerfile: This is where we write our docker code to create a Docker image. There are a bunch of different keywords, like `FROM` to build our image based on another one, `RUN`
-to run some code on our image (like installing some packages with apt), `COPY` to copy files from the host to the container, and more.
-2. Docker image: A Docker image is like a snapshot. When we execute `docker build path/to/Dockerfile`, the docker daemon reads and execute the code in the Dockerfile, and saves an
-immutable state of the Dockerfile. When we run a container, it's executed from an image.
-3. Docker container: It's the actual software running from a docker image, which we can interact with. Containers run independently with one and other and isolated from the host, but
-there are ways to communicate with each other.
+1. Dockerfile: This is where we write our docker code to create a Docker image. There are a bunch of different keywords, like `FROM` to build our image based on another one, `RUN` to run some code on our image (like installing some packages with apt), `COPY` to copy files from the host machine to the container, and more.
+2. Docker image: A Docker image is like a snapshot. When we execute `docker build path/to/Dockerfile`, the docker daemon reads and executes the code in the Dockerfile, and saves an immutable state of the Dockerfile. When we run a container, it's executed from an image.
+3. Docker container: It's the actual software running from a docker image, which we can interact with. Containers run independently from one another and isolated from the host machine, but there are ways to communicate with each other.
 
-To understand it better, think of it as a C program. The Dockerfile is like a .c file, with the code to execute. The Docker image would be the executable (a.out), a compiled version of
-the .c file and it's immutable. And the Docker container would be like the program running itself, with its own PID, memory and dynamic content. You could even have multiple containers
-running from the same image if you want. See [1.1.4 Docker elements](#114-Docker-elements) for more information.
+To understand it better, think of it as a C program. The Dockerfile is like a .c file, with the code to execute. The Docker image would be the executable (a.out), a compiled version of the .c file and it's immutable. And the Docker container would be like the actual program running, with its own PID, memory and dynamic content. The same way you could have multiple programs running from the same executable, you could have multiple containers running from the same image, isolated from one another. See section [1.1.4 Docker elements](#114-Docker-elements) for more information.
 
 ![Dockerfile, docker image and docker container](https://github.com/user-attachments/assets/54fe709a-aed6-4816-8c65-a935b54d2268)
 
 #### 1.1.3 Virtual Machine vs Docker
-Okay, Docker is great. We get it. But, why should we use it if we have virtual machines (VM)? Don't we get the same result using them? To answer this question, we should
-understand how VMs work behind the scenes. <br/>
-First of all, let's take a look on how computers work under the surface. A computer consists in 2 parts: the physical part (hardware), that consists in the CPU, the RAM, the
-disk... and the logic part (software); applications, libraries, and more... But, how does applications communicate with the hardware? It would be pretty messy (and dangerous) to
-let the apps communicate themselves with it. Here is where the `kernel` comes in. The `kernel` is software that sits between the applications and the hardware, and helps with the communication of these two (similar to an API with the frontend and the backend). <br/>
-When an app wants to access some hardware (for example, we want to print a letter 'A' into the screen), we would run some "high-level" code (for example, the C function `write`).
-Then, the OS would make a `syscall`, a "low-level" function call that tells the kernel the operation we want to do. Then, the kernel would execute the proper function to do what we asked it to do. This way, we managed to go from code on our app to printing a letter into our screen. <br/>
-Applications rarely call syscalls directly. Instead, they use higher-level wrappers, like shells or library functions, like `write`, `read`, `open`..., which internally perform the syscalls.
+Now that we understand how Docker works, we should ask ourselves the next question: Why should we use Docker if we have virtual machines (VM)? Don't we get the same result using them? To answer it, we should understand how VMs work behind the scenes. <br/>
+First of all, let's take a look at how computers work under the surface. A computer has two main components: the physical part (hardware), which includes the CPU, RAM, disk, and more; and the logical part (software), such as applications, libraries, and other system tools. But, how do applications communicate with the hardware? It would be pretty messy (and dangerous) to let the apps communicate themselves with it. Here is where the `kernel` comes in. The `kernel` is software that sits between the applications and the hardware, and helps with the communication of these two (similar to an API with the frontend and the backend). <br/>
+When an app wants to access some hardware (for example, we want to print a letter 'A' into the screen), we would run some "high-level" code, like the C function `write`. Then, the OS would make a `syscall`, a "low-level" function call that tells the kernel the operation we want to do. Then, the kernel would execute the proper function to do what we asked it to do. This way, we managed to go from code on our app to printing a letter into our screen. <br/>
+Applications rarely call syscalls directly. Instead, they use higher-level wrappers, like shells or library functions (such as `write`, `read`, `open`...), which internally perform the syscalls.
 
 ![PC Architecture](https://github.com/user-attachments/assets/87398e99-0c01-4a49-a0e7-47fd16071dbf)
 
-Then, what is the difference between a kernel and an OS? The kernel is the basic you need to communicate between software and hardware. But is almost unusable without tools like a shell or libraries like we saw. An OS brings you different tools so you can work with your kernel in a much friendly way. These tools include daemons, init systems, shells, libraries, basic utilities (ls, cat, mv...), and more. Think of the kernel as the engine of a car; it is essential, but unusable alone. The OS includes the kernel and other tools that make the system and pc usable.
+Then, what is the difference between a kernel and an OS? The kernel is the basic component you need to communicate between software and hardware. But it's almost unusable without tools like a shell or libraries like we saw. An OS brings you different tools so you can work with your kernel in a much friendly way. These include daemons, init systems, shells, libraries, basic utilities (ls, cat, mv...), and more. Think of the kernel as the engine of a car; it is essential, but unusable alone. The OS includes the kernel and other tools that make the system and pc usable.
 
-As we already stated, Docker containers runs in an isolated environment. VMs works in a similar way, with key differences. A VM virtualizes everything: The applications you run inside them, the libraries it contains, and the operating system. And here is the key part. It also virtualizes the kernel of the distro you are using. If you have a Windows and Debian distro, and your host machine has an Ubuntu OS, then the VMs would virtualize the Windows and Debian kernel. Docker, on the other hand, uses the same kernel as the host machine, and only virtualizes OS-level applications (shells, utilities, libaries...). This makes Docker blazingly fast compared to a VM, because virtualizing the kernel makes it much slower. <br/>
-Another key difference is how Docker consumes resources. A VM always has the resources that you give them. For example, if you give a VM 4 cpu cores and 4 GB of RAM, even if your VM is idle, those resources remain reserved for the VM. Docker, on the other hand, manages the resources dynamically. The docker daemon tracks how many resources the containers needs, and frees / reserves resources on the go.
+As we already stated, Docker containers run in isolated environments. VMs work in a similar way, with key differences. A VM virtualizes everything: The applications you run inside them, the libraries it contains, and the operating system. And here is the key part. It also virtualizes the kernel of the distro you are using. If you have a Windows and Debian distro, and your host machine has an Ubuntu OS, then the VMs would virtualize the Windows and Debian kernel. Docker, on the other hand, uses the same kernel as the host machine, and only isolates OS-level applications (shells, utilities, libraries...). This is the reason that you cannot run Windows kernel containers on Linux and vice versa; containers share the host machine's kernel, making cross-kernel compatibility impossible. This makes Docker significantly faster and more efficient compared to a VM, especially for development and deployment. <br/>
+Another key difference is how Docker consumes resources. A VM always has the resources that you give them. For example, if you give a VM 4 cpu cores and 4 GB of RAM, even if your VM is idle, those resources remain reserved for the VM. Docker, on the other hand, manages the resources dynamically. The docker daemon tracks how many resources the containers need, and frees / reserves resources on the go.
+In summary, while both VMs and Docker offer isolation, Docker is a much faster and more efficient solution, especially for development and deployment, by only virtualizing OS-level applications, sharing the host machine's kernel and allocating resources dinamically.
 
 ![Docker vs VM](https://github.com/user-attachments/assets/4673b5b7-9f3b-4620-a162-7b91222f9085)
 
