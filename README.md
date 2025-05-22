@@ -20,8 +20,8 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;[1.1 Docker](#11-Docker) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.1.1 What is Docker?](#111-What-is-Docker-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.1.2 How does Docker work?](#112-How-does-Docker-work-) <br/>
-&ensp;&ensp;&ensp;&ensp;[1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker) <br/>
-&ensp;&ensp;&ensp;&ensp;[1.1.4 Docker elements](#114-Docker-elements) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker-) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.1.4 Docker tools](#114-Docker-tools-) <br/>
 
 
 
@@ -30,7 +30,7 @@ In this section, you will learn all the key concepts to face this project. You w
 
 ### 1.1 Docker
 #### 1.1.1 What is Docker? 🐳📦:
-Docker is a software platform that automates the deployment of applications. Docker creates lightweight isolated environments called `containers`, separating them from your infrastructure (host machine). A `container` is an environment with OS-level isolation and applications running, independent from the host machine (see section [1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker)). <br/>
+Docker is a software platform that automates the deployment of applications. Docker creates lightweight isolated environments called `containers`, separating them from your infrastructure (host machine). A `container` is an environment with OS-level isolation and applications running, independent from the host machine (see section [1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker-)). <br/>
 To understand why Docker is really powerful, let's imagine you have built a Java application using Java 17 in your Debian environment. All works as expected. You are really proud of your work, so you want to share your feats with your partners. They clone the repo and try to use your application, but, oh no, surprise, it does not even compile. Why? Because they do not use Debian, but Ubuntu (some environment variables changed). Moreover, they do not even have Java 17 installed on their PC, but Java 12, and your application fails to run correctly. This is a classical problem known as "It works on my machine". <br/>
 Here is where Docker comes in handy . Using Docker, you can create an isolated environment for your application, with the operating system and the system requirements that you need (Debian and Java 17 in our case). You would build a Debian container, install Java 17 on it, and copy your application files inside of it. Then, you would execute your container, and you would have your application running smoothly, as it isolates itself from the host machine (so it does not share neither the operating system nor system requirements).
 
@@ -44,16 +44,16 @@ The Docker Host (server-side of docker) can be on the same host machine as the c
 
 ![Docker architecture](https://github.com/user-attachments/assets/2273b38b-c7aa-440e-85ee-19ad2ecd9be2)
 
-To work with Docker, we will use 3 different elements: the Dockerfile, a Docker image and a Docker container.
+To work with Docker, we will use at least 3 different elements: the Dockerfile, a Docker image and a Docker container.
 1. Dockerfile: This is where we write our docker code to create a Docker image. There are a bunch of different keywords, like `FROM` to build our image based on another one, `RUN` to run some code on our image (like installing some packages with apt), `COPY` to copy files from the host machine to the container, and more.
 2. Docker image: A Docker image is like a snapshot. When we execute `docker build path/to/Dockerfile`, the docker daemon reads and executes the code in the Dockerfile, and saves an immutable state of the Dockerfile. When we run a container, it's executed from an image.
 3. Docker container: It's the actual software running from a docker image, which we can interact with. Containers run independently from one another and isolated from the host machine, but there are ways to communicate with each other.
 
-To understand it better, think of it as a C program. The Dockerfile is like a .c file, with the code to execute. The Docker image would be the executable (a.out), a compiled version of the .c file and it's immutable. And the Docker container would be like the actual program running, with its own PID, memory and dynamic content. The same way you could have multiple programs running from the same executable, you could have multiple containers running from the same image, isolated from one another. See section [1.1.4 Docker elements](#114-Docker-elements) for more information.
+To understand it better, think of it as a C program. The Dockerfile is like a .c file, with the code to execute. The Docker image would be the executable (a.out), a compiled version of the .c file and it's immutable. And the Docker container would be like the actual program running, with its own PID, memory and dynamic content. The same way you could have multiple programs running from the same executable, you could have multiple containers running from the same image, isolated from one another. See section [1.1.4 Docker tools](#114-Docker-tools-) for more information.
 
 ![Dockerfile, docker image and docker container](https://github.com/user-attachments/assets/54fe709a-aed6-4816-8c65-a935b54d2268)
 
-#### 1.1.3 Virtual Machine vs Docker
+#### 1.1.3 Virtual Machine vs Docker 💻​🆚​🐳​:
 Now that we understand how Docker works, we should ask ourselves the next question: Why should we use Docker if we have virtual machines (VM)? Don't we get the same result using them? To answer it, we should understand how VMs work behind the scenes. <br/>
 First of all, let's take a look at how computers work under the surface. A computer has two main components: the physical part (hardware), which includes the CPU, RAM, disk, and more; and the logical part (software), such as applications, libraries, and other system tools. But, how do applications communicate with the hardware? It would be pretty messy (and dangerous) to let the apps communicate themselves with it. Here is where the `kernel` comes in. The `kernel` is software that sits between the applications and the hardware, and helps with the communication of these two (similar to an API with the frontend and the backend). <br/>
 When an app wants to access some hardware (for example, we want to print a letter 'A' into the screen), we would run some "high-level" code, like the C function `write`. Then, the OS would make a `syscall`, a "low-level" function call that tells the kernel the operation we want to do. Then, the kernel would execute the proper function to do what we asked it to do. This way, we managed to go from code on our app to printing a letter into our screen. <br/>
@@ -69,8 +69,14 @@ In summary, while both VMs and Docker offer isolation, Docker is a much faster a
 
 ![Docker vs VM](https://github.com/user-attachments/assets/4673b5b7-9f3b-4620-a162-7b91222f9085)
 
-#### 1.1.4 Docker elements
-
+#### 1.1.4 Docker tools 📃​📦​:
+Docker gives us many tools that helps us develop and deploy applications easier and faster. In this section, we will learn which tools we have and their purpose, such as the Dockerfile, volumes, networks, and more.
+- <b>Dockerfile:</b> The Dockerfile is a text document which contains all the commands to build an image. These are written by the user and they assemble the instructions you could execute with the Docker Client. They are case-insensitive, but the convention states that you should write them in capital letters. <br/>
+One important concept you should know about Dockerfiles is their working context. No instruction run inside a Dockerfile can go beyond it. Think about the next directory structure, `srcs/requirements/nginx/Dockerfile`. Every command written in the Dockerfile has `srcs/requirements/nginx/` as the working directory, and can access every file and directory inside of it, but no command can go beyond it (e.g., access `srcs/requirements/mariadb/tools/script.sh`). This is done on purpose, as Dockerfiles are used to build images, and these are used to run containers. As we already stated, containers are isolated from one another and with the host, so it wouldn't make much sense to let a container (neither a Dockefile) access files that are not theirs. This is also the reason why the Inception's subject require this directory structure; every configuration file and script should be saved at the same level (or below) as their Dockerfile. <br/>
+There are a bunch of instructions you can use, but here are a the ones we will use for Inception:
+  - `FROM image`: This keyword is used to set the `image` argument as the base image for your build. Docker first pulls the base image from the configured registry, and run the rest of the Dockerfile's instructions on top of that one. Every valid Dockerfile should start with the `FROM` keyword (with some exceptions).
+  - `RUN command`: The `RUN` keyword lets you execute a shell command inside the building image. This instruction is isolated from the host machine; this means that you cannot `RUN` a command to do something related to the host (for example, copying a file from the host to the image). For example, if you want to install the SSH package inside the image, write `RUN apt install ssh`.
+  - `COPY host/path image/path`: This instruction is used to copy files from the host machine to the image. The `host/path` argument has the Dockerfile's context, meaning if you write `COPY . image/path`, the `.` path is equivalent to the Dockerfile's directory path. The `image/path` argument has the `WORKDIR` instruction context. For example, if you want to copy a configuration file you wrote to the image, you would run `COPY ./path/to/conf/file.conf /etc/conf/file.conf`.
 
 
 ## Concepts
