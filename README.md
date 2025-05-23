@@ -93,16 +93,33 @@ An important concept you should know about is image composition. Docker images a
 
 ![Docker build cache](https://github.com/user-attachments/assets/1c3c9a63-9906-47e3-8630-d0cd0854d73f)
 
-When you build an image, it is saved on the host machine. If you want to use that image on multiple computers, or publish it so other people can use it, you need to store it in a Docker registry. The same applies if you want to use an already created image, like Debian or Ubuntu base images. When you are building an image, the `FROM` keyword pulls the base image from the configured Docker registry (Docker Hub by default), and builds the rest on top of it. To pull or push an image from the configured registry, use the following commands: <br/>
-~~~
-docker pull image[:tag]
-docker push image[:tag]
-~~~
+When you build an image, it is saved on the host machine. If you want to use that image on multiple computers, or publish it so other people can use it, you need to store it in a Docker registry. The same applies if you want to use an already created image, like Debian or Ubuntu base images. When you are building an image, the `FROM` keyword pulls the base image from the configured Docker registry (Docker Hub by default), and builds the rest on top of it. Here are a few useful commands related to images:
+  - `docker pull image[:tag]`: Pulls an image from the configured registry.
+  - `docker push image[:tag]`: Pushes an image to a registry.
+  - `docker rmi image1 [...]`: Removes one or more images.
+  - `docker build -t image_name path/to/build/context`: Build an image from a Dockerfile (specifying the context).
+
 To run a container from an image, use the command `docker run --name container_name image_name`, where the `--name` flag specifies the container name (it cannot be another container with the same name) and the image_name is the image you want to run the container from. By default, containers run as a foreground process, meaning the terminal remains occupied until the container exits. If you want to run the container as a background process (detached mode), you can add the `-d` or `--detach` flag. 
 
-- <b>Docker container:</b> 
+- <b>Docker container:</b> A Docker container is the isolated process that runs with the required dependencies to execute a designated application. The main difference between a Docker image and a Docker container is that a container is a running instance of an image (a mutable process), while the image is just the package that contains binaries and dependencies to run an application (it's an immutable file, not a process). <br/>
+A container is self-contained and isolated, meaning it has minimal influence on the host machine and other containers, and it doesn't rely on any host machine dependencies to work or execute their designated application (a container doesn't need the host machine to have python installed for it to execute a python application). This increases security and makes them more portable, as containers only need to have Docker installed on the host machine to work. They are also independent from one another, meaning that stopping or deleting a container won't affect others. <br/>
+However, sometimes you need to enable communication between containers and with the host machine. For example, in a microservices architecture (the one that the Inception project uses), every service, such as the frontend, the backend or the database, is run in a different server (or container when using Docker), and they communicate with each other via TCP connections. This ensures scalability, as each service is encapsulated and easier to troubleshoot or scale independently. For Inception project, you must set one container per service (Nginx, Wordpress, MariaDB...). As containers are isolated from each other, we need to find a way to communicate MariaDB's container with Wordpress's container, and so on. We can achieve this using Docker networks and publishing ports, which I will cover later in this section. <br/>
+Something to be also aware of is data persistence inside a container. Containers are designed to be ephemeral; if something breaks in your application and the container results unusable, you only need to fix your application, rebuild the image and run a container. In other words, the only useful thing inside a container is your application. Containers are primarily a tool for deployment, not as a long-term data storage. This is why any data stored inside a container is lost when the container is deleted; it's not considered useful. Nevertheless, data persistence is important in many applications and services, like a database. To prevent data loss, you can set up Docker volumes, which I will cover later in this section. <br/>
+Here is a list of useful Docker client commands you can use related to containers:
+  - `docker ps`: This command lists all the running containers and their information (ID, name, `ENTRYPOINT`, status...). Add the `-a` flag to also list stopped and exited containers.
+  - `docker logs container_name`: Prints the logs of a container (messages printed by the `ENTRYPOINT` command).
+  - `docker run -d --name container_name image_name`: Runs a container from an image.
+  - `docker stop containerID`: Stops a container. A stopped container can be run again with `docker start`.
+  - `docker start containerID`: Starts a stopped container.
+  - `docker rm containerID`: Removes a container from the host machine. Add the `-v` to also remove the anonymous volumes associated with it.
+  - `docker exec container_name command arg1 [...]`: Executes a command inside a container. The output of the command is printed to `stdout`. A really useful way to use this command is executing `docker exec -it container_name bash`. The `-i` flag activates interactive mode, meaning it keeps STDIN open even if the container is not attached to the terminal (`docker run -d`), and the `-t` allocates a pseudo-tty (pseudo-terminal) inside the container. In other words, this command allows us to interact with the container file system via bash, and lets us debug possible errors, misconfigurations, and more.
 
-#### 1.1.5 The Docker entrypoint command and PID 1 ⚡1️⃣:
+![Analogy Docker - C program](https://github.com/user-attachments/assets/c2b7b6fe-8c24-41b8-b285-a6e2fd3e0c8c)
+
+
+
+
+#### 1.1.5 The Docker entrypoint command and PID 1 :
 
 
 ## Concepts
