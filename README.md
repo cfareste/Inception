@@ -88,9 +88,19 @@ At least one of these two is needed to write a valid Dockerfile. To specify the 
 There are other keywords, like `USER user` to specify which user should execute the `ENTRYPOINT`, or `ENV key=VAR` to specify environment variables, but I will not cover them here. <br/>
 To build an image from a Dockerfile, use the `docker build -t image_name -f path/to/Dockerfile path/to/build/context`, where the `-t` flag defines the image tag (or name) and the `-f` specifies the path to the Dockerfile you want to build (You can omit the `-f` flag if you are currently inside the Dockerfile's directory).
 
-- <b>Docker Image:<b/> Image.
+- <b>Docker image:</b> A Docker image is a package that includes all the files, binaries, and dependencies required to run a container. If you want to run a MariaDB container, its corresponding image would contain the mariadb-server binary, its configuration files, and its dependencies to ensure MariaDB runs correctly. For a Node.js application, the image would include the preferred Node.js version, the application's code, and other dependencies. An image is like a snapshot: an immutable object that contains the complete environment needed to run a designated application. Once an image is created, it cannot be modified. If you want to make changes to an image, you must either create a new one from scratch or add changes to an existing one (creating a new one in the process). <br/>
+An important concept you should know about is image composition. Docker images are built in layers, where every instruction written in the Dockerfile is an image layer. A layer represents a set of changes inside the image and its file system, such as adding, removing or modifying files. Docker uses a build cache, where each image layer is cached and reused if possible. When you modify a Dockerfile instruction, or the file associated with it (e.g. changing the content of `main.c` used in `COPY ./main.c /srcs/`), Docker rebuilds that layer and the subsequent ones, reusing the cache for the ones that remain unchanged. This avoids redundant rebuilds, making the build process much faster. <br/>
 
+![Docker build cache](https://github.com/user-attachments/assets/1c3c9a63-9906-47e3-8630-d0cd0854d73f)
 
+When you build an image, it is saved on the host machine. If you want to use that image on multiple computers, or publish it so other people can use it, you need to store it in a Docker registry. The same applies if you want to use an already created image, like Debian or Ubuntu base images. When you are building an image, the `FROM` keyword pulls the base image from the configured Docker registry (Docker Hub by default), and builds the rest on top of it. To pull or push an image from the configured registry, use the following commands: <br/>
+~~~
+docker pull image[:tag]
+docker push image[:tag]
+~~~
+To run a container from an image, use the command `docker run --name container_name image_name`, where the `--name` flag specifies the container name (it cannot be another container with the same name) and the image_name is the image you want to run the container from. By default, containers run as a foreground process, meaning the terminal remains occupied until the container exits. If you want to run the container as a background process (detached mode), you can add the `-d` or `--detach` flag. 
+
+- <b>Docker container:</b> 
 
 #### 1.1.5 The Docker entrypoint command and PID 1 ⚡1️⃣:
 
