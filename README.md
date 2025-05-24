@@ -135,7 +135,8 @@ Something to be aware of is using a volume (or bind mount) to a non-empty direct
 
 ![Data loss when using volumes](https://github.com/user-attachments/assets/55d1283e-7dc1-4351-a465-f11c8b839028)
 
-
+##### Docker network:
+Networking of containers is key to ensure our services and applications can connect with each other. For example, if we have a container running Nginx and another one running Wordpress with PHP-FPM, we need a way to send the Nginx's requests to Wordpress container, and send the response back. Containers are isolated from each other, so at first sight this is impossible. However, we can achieve this using Docker networks. Using them, we can specify .
 
 
 #### 1.1.5 The Docker entrypoint command and PID 1 👑⚡:
