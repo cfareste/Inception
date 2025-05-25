@@ -156,7 +156,9 @@ Nevertheless, even if Docker networks allow us to connect multiple containers, t
 ![Networks and port publishing](https://github.com/user-attachments/assets/014a3906-0328-4b29-9e1d-5b69b02ba59a)
 
 #### 1.1.5 The Docker entrypoint command and PID 1 👑⚡:
+We have already seen how to run a container by creating a Dockerfile and building an image from it. Using the `ENTRYPOINT` keyword (or `CMD`), we can specify the application or program we want to execute and track within the container. Docker will keep the container alive as long as that executable is running. But, which conditions does that executable need to accomplish in order to run the container properly? 
 
+Docker keeps the container alive as long as the executable is running; once it stops, the container exits
 
 
 ## Concepts
