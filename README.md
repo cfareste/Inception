@@ -23,6 +23,8 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.1.4 Docker tools](#114-Docker-tools-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.1.5 ENTRYPOINT and PID 1 in Docker](#115-ENTRYPOINT-and-PID-1-in-Docker-) <br/>
+&ensp;&ensp;[1.2 Docker Compose](#12-Docker-Compose) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.2.1 What is Docker Compose?](#121-What-is-Docker-Compose-) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
@@ -165,10 +167,14 @@ The PID 1 process inside a container is the `ENTRYPOINT` command. If the `ENTRYP
 
 ![PID and namespaces](https://github.com/user-attachments/assets/9d2ba567-c598-4b28-bc27-df6005012da3)
 
+### 1.2 Docker Compose
+#### 1.2.1 What is Docker Compose? 🐙🐳:
+We have already seen what Docker is and how we can work with it. But, as we saw, working with multi-container applications quickly becomes complicated. You would need to execute several Docker commands in the right order to ensure the application runs properly. For example, if we wanted to create the mandatory part of the Inception project, with Nginx, WordPress and MariaDB using volumes and networks, we would need to create two separate networks with `docker network create`, and run `docker build` and `docker run -v` once per service, in the right order (e.g., ensuring MariaDB starts before WordPress, which depends on it), while avoiding configuration errors (e.g., mistakenly linking Nginx to MariaDB instead of WordPress). Moreover, if you want to add new services, like an FTP server, you would need to repeat all of these steps, and add new ones, and every time you want to start or stop your application, execute the same commands over and over again. One potential solution is writing a shell script to automate these commands, but this still doesn't scale well, as you would need to update the script for every newly added service, maintaining different scripts for tasks like starting or stopping the containers. <br/>
+This is where Docker Compose comes in handy. Docker Compose is a Docker container orchestration tool that lets you define and run multi-container applications in a faster and more efficient way than using only Docker. Under the hood, it's still Docker; it uses the same Docker daemon and Docker client, and the Dockerfiles, images, and every tool is the same, but Compose automates the management to solve all the issues we stated earlier. It lets you define and manage multiple services, containers, volumes and networks in a single YAML file. With a simple command, like `docker compose up`, you can set up all the services and volumes and connect the containers in the right way, or stop your application cleanly.
+
 ## Concepts
 ### Docker Compose
 #### What is Docker Compose
-#### Differences between using only Docker or Docker Compose
 #### The compose file
 ##### Top level instructions (version, name, services, volumes, networks, configs and secrets)
 ### Inception's infrastructure
