@@ -22,6 +22,7 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.1.2 How does Docker work?](#112-How-does-Docker-work-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.1.3 Virtual Machine vs Docker](#113-Virtual-Machine-vs-Docker-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.1.4 Docker tools](#114-Docker-tools-) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.1.5 ENTRYPOINT and PID 1 in Docker](#115-ENTRYPOINT-and-PID-1-in-Docker-) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
@@ -79,7 +80,7 @@ There are many instructions you can use, but here are the ones we will use for I
   - `WORKDIR image/path`: The `WORKDIR` instruction sets the current working directory inside the image. All paths specified from this will be relative to it. If no `WORKDIR` is specified, the default is `/`. 
   - `COPY host/path image/path`: This instruction is used to copy files from the host machine to the image. The `host/path` argument has the Dockerfile's build context, meaning if you write `COPY . image/path`, the `.` path is equivalent to the Dockerfile's directory path. The `image/path` argument has the `WORKDIR` instruction context, but you can specify an absolute path. For example, if you want to copy a configuration file you wrote to the image, you would run `COPY ./path/to/conf/file.conf /etc/conf/file.conf`.
   - `EXPOSE port`: This instruction tells Docker which ports our container is expected to publish. This keyword is merely informative; it doesn't actually open nor publish any port. It is used as a type of documentation to know which ports are intended to be published when running the container. To read about publishing ports, see the Docker network section.
-  - `ENTRYPOINT [ "exec", "arg1", ... ]` and `CMD [ "exec", "arg1", ... ]`: The `ENTRYPOINT` instruction specifies the command or script that is executed every time the container runs. When you run a container with `docker run`, regardless of it being the first time running or a re-run on a stopped container, the `ENTRYPOINT` will be executed. Docker keeps the container alive as long as the executable is running; once it stops, the container exits (see [1.1.5 The Docker entrypoint command and PID 1](#115-The-Docker-entrypoint-command-and-PID-1-)). <br/>
+  - `ENTRYPOINT [ "exec", "arg1", ... ]` and `CMD [ "exec", "arg1", ... ]`: The `ENTRYPOINT` instruction specifies the command or script that is executed every time the container runs. When you run a container with `docker run`, regardless of it being the first time running or a re-run on a stopped container, the `ENTRYPOINT` will be executed. Docker keeps the container alive as long as the executable is running; once it stops, the container exits (see [1.1.5 ENTRYPOINT and PID 1 in Docker](#115-ENTRYPOINT-and-PID-1-in-Docker-)). <br/>
   The `CMD` keyword's function depends on whether `ENTRYPOINT` is present or not: If the `ENTRYPOINT` is not present in the Dockerfile, then the `CMD` specifies the same as `ENTRYPOINT` (the command or script to execute). But if the `ENTRYPOINT` is present, the `CMD` will specify the arguments of the `ENTRYPOINT` executable. <br/>
 At least one of these two is needed to write a valid Dockerfile. To specify the executable and / or arguments you can either use the exec form (`[ "exec", "arg1", ... ]`) or the shell form (`exec arg1 ...`), though the exec form is preferred as it avoids an extra shell process. 
 
@@ -155,20 +156,14 @@ Nevertheless, even if Docker networks allow us to connect multiple containers, t
 
 ![Networks and port publishing](https://github.com/user-attachments/assets/014a3906-0328-4b29-9e1d-5b69b02ba59a)
 
-#### 1.1.5 The Docker entrypoint command and PID 1 👑⚡:
-We have already seen how to run a container by creating a Dockerfile and building an image from it. Using the `ENTRYPOINT` keyword (or `CMD`), we can specify the application or program we want to execute and track within the container. Docker will keep the container alive as long as that executable is running. But, which conditions does that executable need to accomplish in order to run the container properly? 
-
-Docker keeps the container alive as long as the executable is running; once it stops, the container exits
-
+#### 1.1.5 ENTRYPOINT and PID 1 in Docker 👑⚡:
+We have already seen how to run a container by creating a Dockerfile and building an image from it. Using the `ENTRYPOINT` keyword (or `CMD`), we can specify the script or program that will be executed as the main process inside the container. Docker will keep the container alive as long as that executable is running. But which conditions must that executable meet for the container to function properly? <br/>
+To answer this question, we need to understand how processes work under the hood. In Linux, processes are created within namespaces, and their assigned PID value depends on the namespace in which they are created, receiving the lowest value available. Namespaces can be nested, meaning you can create a new process namespace inside another one, and the processes' PIDs created inside the inner namespace will start again from 1. <br/>
+When Linux kernel boots up, it starts a process in user-space called `init` that always gets associated the PID 1. The job of `init` is to start other processes, act as the direct or indirect ancestor of all processes, adopt orphaned processes and terminate all processes on shutdown. In other words, the `init` process controls the lifecycle of all other processes, from start to finish, including reaping orphaned child processes to avoid zombies. PID 1 is special in Linux; it will never receive any signal if the process didn't explicitly create a handle for it, and will only receive `SIGKILL` or `SIGSTOP` if it comes from an ancestor namespace (in the case of `init` process, the ancestor namespace would be the kernel itself). To put it simply, you cannot kill or stop the PID 1 process like a regular one. <br/>
+Docker runs container processes inside their own namespace (every container has a namespace associated to it). When you execute `docker stop`, a `SIGTERM` signal will be sent to the container's PID 1. As we already stated, if that process doesn't have a handle for that signal, it won't receive it. In that case, Docker will wait 10 seconds and send a `SIGKILL`. Since that last signal is coming from an ancestor namespace (the Docker daemon is outside the container), the container will be killed, therefore stopped. It's a good practice to have some sort of `init` process in your containers like Linux does, to ensure all processes are removed when you execute `docker stop`, even though it's not strictly necessary if your application doesn't spawn any children. For example, the `tini` program is a lightweight init system for containers. Some official images like `python` or `node` use `tini` to manage internal processes. <br/>
+The PID 1 process inside a container is the `ENTRYPOINT` command. If the `ENTRYPOINT` is a script (e.g., `ENTRYPOINT [ "bash", "init_service.sh" ]`), then the script itself gets assigned the PID 1. If you want a specific command inside the script to run as the PID 1 process, you should use `exec "$@"` inside the script. The command `exec` replaces the current shell process for the one passed as argument (similar to `execve` in C), and `$@` expands to all the arguments of the script. Then, use the `CMD` instruction in the Dockerfile to specify those arguments. The executed command must be a foreground process, meaning it cannot be a daemon or run in the background. Docker relies on this process to properly manage the container's lifecycle.
 
 ## Concepts
-### Docker
-#### What is Docker
-#### How Docker works
-#### VM vs Docker
-#### Docker elements
-##### Common instructions (FROM, RUN...)
-#### Why is PID 1 important
 ### Docker Compose
 #### What is Docker Compose
 #### Differences between using only Docker or Docker Compose
@@ -177,6 +172,7 @@ Docker keeps the container alive as long as the executable is running; once it s
 ### Inception's infrastructure
 #### MariaDB
 #### PHP-FPM
+##### Static vs Dynamic files
 ##### What is a CGI
 ##### How does a CGI work
 ##### Differences between CGI and FastCGI
@@ -215,6 +211,7 @@ Docker keeps the container alive as long as the executable is running; once it s
 https://docs.docker.com/get-started/docker-overview/ <br/>
 https://stackoverflow.com/questions/47150829/what-is-the-difference-between-binding-mounts-and-volumes-while-handling-persist <br/>
 https://docs.docker.com/engine/network/drivers/ <br/>
+https://github.com/krallin/tini <br/>
 https://github.com/antontkv/docker-and-pid1
 
 
