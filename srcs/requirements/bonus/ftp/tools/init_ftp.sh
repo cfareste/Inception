@@ -12,4 +12,4 @@ create_ftpuser()
 }
 
 create_ftpuser
-vsftpd /etc/vsftpd/ftp_inception.conf
+exec "$@"

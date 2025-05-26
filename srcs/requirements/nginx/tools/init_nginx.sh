@@ -23,4 +23,4 @@ copy_web_files()
 
 create_tls_cert
 copy_web_files
-nginx -g 'daemon off;'
+exec "$@"

@@ -39,4 +39,4 @@ install_secure_policies
 initial_transaction
 service mariadb stop
 
-mariadbd
+exec "$@"

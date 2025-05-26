@@ -17,3 +17,4 @@ WORKDIR /var/www/html
 COPY ./bonus/web/ /root/web
 
 ENTRYPOINT [ "/root/init_nginx.sh" ]
+CMD [ "nginx", "-g", "daemon off;" ]

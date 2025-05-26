@@ -358,9 +358,9 @@ install_secure_policies()
 }
 
 install_secure_policies
-mariadbd
+exec "$@"
 ~~~
-2. Copying it to the /root folder
+2. Copying it to the /root folder and adding the exec args with CMD
 ~~~
 FROM debian:bullseye
 
@@ -376,6 +376,7 @@ RUN mkdir -p /run/mysqld && \
     chmod 777 /run/mysqld
 
 ENTRYPOINT [ "/root/init_mariadb.sh" ]
+CMD [ "mariadbd" ]
 ~~~
 3. Can't execute the container due to permission denied (missing execution permissions)
 ~~~
@@ -390,7 +391,7 @@ https://discourse.ubuntu.com/t/mariadb-error-2002-hy000-cant-connect-to-local-se
 service mariadb start
 install_secure_policies
 service mariadb stop
-mariadbd
+exec "$@"
 ~~~
 5. Now doesn't work because mariadb-secure-installation expects a tty and not a heredoc. So we need to do the operations manually: <br/>
 https://stackoverflow.com/questions/24270733/automate-mysql-secure-installation-with-echo-command-via-a-shell-script <br/>
@@ -427,7 +428,7 @@ intialize_service
 install_secure_policies
 service mariadb stop
 
-mariadbd
+exec "$@"
 ~~~
 
 # Create a simple compose file with only mariadb
@@ -556,7 +557,7 @@ install_secure_policies
 initial_transaction
 service mariadb stop
 
-mariadbd
+exec "$@"
 ~~~
 
 
@@ -699,7 +700,7 @@ https://stackoverflow.com/questions/37313780/how-can-i-start-php-fpm-in-a-docker
 ~~~
 [...]
 
-php-fpm7.4 -F
+exec "$@"
 ~~~
 Also, wordpress must be installed in the root directory of nginx, so we set the workdir there: <br/>
 https://serverfault.com/questions/718449/default-directory-for-nginx
@@ -709,6 +710,8 @@ https://serverfault.com/questions/718449/default-directory-for-nginx
 WORKDIR /var/www/html
 
 [...]
+
+CMD [ "php-fpm7.4", "-F" ]
 ~~~
 
 We see 2 errors: <br/>
@@ -755,6 +758,7 @@ WORKDIR /var/www/html
 EXPOSE 9000
 
 ENTRYPOINT [ "/root/init_wordpress.sh" ]
+CMD [ "php-fpm7.4", "-F" ]
 ~~~
 This also fails because it tries to send an email to the admin_email. We can prevent it with --skip-email <br/>
 https://github.com/wp-cli/wp-cli/issues/1172 <br/>
@@ -773,7 +777,7 @@ install_and_configure_wordpress()
 }
 
 install_and_configure_wordpress
-php-fpm7.4 -F
+exec "$@"
 ~~~
 
 
@@ -846,6 +850,7 @@ WORKDIR /var/www/html
 EXPOSE 9000
 
 ENTRYPOINT [ "/root/init_wordpress.sh" ]
+CMD [ "php-fpm7.4", "-F" ]
 ~~~
 
 
@@ -1046,7 +1051,7 @@ create_tls_cert()
 }
 
 create_tls_cert
-nginx -g 'daemon off;'
+exec "$@"
 ~~~
 Then, in Dockerfile:
 ~~~
@@ -1057,6 +1062,7 @@ COPY --chmod=700 ./tools/create_tls_cert.sh /root/
 [...]
 
 ENTRYPOINT [ "/root/create_tls_cert.sh" ]
+CMD [ "nginx", "-g", "daemon off;" ]
 ~~~
 
 Then, we need to adapt our nginx server to accept SSL connections: <br/>
@@ -1401,7 +1407,7 @@ install_and_configure_redis_plugin()
 
 install_and_configure_wordpress
 install_and_configure_redis_plugin
-php-fpm7.4 -F
+exec "$@"
 ~~~
 
 This works. But if you go to the plugins site on your wordpress admin panel, you can see its not writeable.
@@ -1414,7 +1420,7 @@ https://wordpress.org/support/topic/redis-object-cache-filesystem-not-writeable-
 install_and_configure_wordpress
 install_and_configure_redis_plugin
 chown -R www-data:www-data ./ && chmod -R 755 ./
-php-fpm7.4 -F
+exec "$@"
 ~~~
 Now it fully works
 
@@ -1446,6 +1452,7 @@ EXPOSE 21
 EXPOSE 49152-49162
 
 ENTRYPOINT [ "/root/init_ftp.sh" ]
+CMD [ "vsftpd", "/etc/vsftpd/ftp_inception.conf" ]
 ~~~
 Then create the configuration file: <br/>
 http://ftp.pasteur.fr/mirrors/centos-vault/3.6/docs/html/rhel-rg-en-3/s1-ftp-vsftpd-conf.html <br/>
@@ -1518,7 +1525,7 @@ create_files_directory()
 
 create_ftpuser
 create_files_directory
-vsftpd /etc/vsftpd/ftp_inception.conf
+exec "$@"
 ~~~
 
 Finally, add the new service to docker-compose.yml and the new secrets
@@ -1617,7 +1624,7 @@ copy_web_files()
 
 create_tls_cert
 copy_web_files
-nginx -g 'daemon off;'
+exec "$@"
 ~~~
 
 This fails because it can't find /bonus/web. That is caused by the Dockerfile context (srcs/requirements/nginx. Here,
@@ -1648,6 +1655,7 @@ COPY --chmod=700 ./nginx/tools/init_nginx.sh /root/
 COPY ./bonus/web/ /root/web
 
 ENTRYPOINT [ "/root/init_nginx.sh" ]
+CMD [ "nginx", "-g", "daemon off;" ]
 ~~~
 
 
@@ -1678,6 +1686,7 @@ WORKDIR /var/www/html
 EXPOSE 9000
 
 ENTRYPOINT [ "/root/init_adminer.sh" ]
+CMD [ "php-fpm7.4", "-F" ]
 ~~~
 The init_adminer.sh script:
 ~~~
@@ -1692,7 +1701,7 @@ copy_adminer_file()
 }
 
 copy_adminer_file
-php-fpm7.4 -F
+exec "$@"
 ~~~
 And the adminer_pool.conf:
 ~~~
@@ -1929,7 +1938,7 @@ copy_adminer_file()
 }
 
 copy_adminer_file
-php-fpm7.4 -F
+exec "$@"
 ~~~
 In init_ftp.sh, we can eliminate "create_files_directory" function:
 ~~~
@@ -1947,7 +1956,7 @@ create_ftpuser()
 }
 
 create_ftpuser
-vsftpd /etc/vsftpd/ftp_inception.conf
+exec "$@"
 ~~~
 And in init_wordpress.sh, we will execute the commands as www-data using su. So bye bye to --allow-root, and
 bye bye to changing ownership and permissions:
@@ -2005,7 +2014,7 @@ install_and_configure_redis_plugin()
 
 install_and_configure_wordpress
 install_and_configure_redis_plugin
-php-fpm7.4 -F
+exec "$@"
 ~~~
 
 

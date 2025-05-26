@@ -15,3 +15,4 @@ EXPOSE 21
 EXPOSE 49152-49162
 
 ENTRYPOINT [ "/root/init_ftp.sh" ]
+CMD [ "vsftpd", "/etc/vsftpd/ftp_inception.conf" ]

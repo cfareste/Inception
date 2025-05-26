@@ -8,4 +8,4 @@ copy_adminer_file()
 }
 
 copy_adminer_file
-php-fpm7.4 -F
+exec "$@"

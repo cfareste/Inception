@@ -51,4 +51,4 @@ install_and_configure_redis_plugin()
 
 install_and_configure_wordpress
 install_and_configure_redis_plugin
-php-fpm7.4 -F
+exec "$@"

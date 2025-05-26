@@ -17,3 +17,4 @@ WORKDIR /var/www/html
 EXPOSE 9000
 
 ENTRYPOINT [ "/root/init_adminer.sh" ]
+CMD [ "php-fpm7.4", "-F" ]

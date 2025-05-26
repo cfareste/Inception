@@ -19,3 +19,4 @@ WORKDIR /var/www/html
 EXPOSE 9000
 
 ENTRYPOINT [ "/root/init_wordpress.sh" ]
+CMD [ "php-fpm7.4", "-F" ]
