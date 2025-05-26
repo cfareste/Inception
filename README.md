@@ -1557,6 +1557,22 @@ secrets:
     file: ${FTP_PASSWORD_SECRET_PATH}
 ~~~
 
+Optionally, we can activate directory listing for /files/ routes, so we can see the files insiede more easily.
+~~~
+    [...]
+ 
+    # Bonus: FTP server
+    # Directive for exactly /files/ request
+    location = /files/ {
+        # Enable directory listing
+        autoindex on;
+
+        # Check if directory exists; if not, error 404 not found
+        try_files $uri/ =404;
+    }
+}
+~~~
+
 
 ## Static website
 https://blog.hubspot.com/website/static-vs-dynamic-website <br/>
@@ -1823,7 +1839,7 @@ Finally, we add a new location at the end of our nginx configuration to catch ev
 ~~~
     [...]
 
-    # BONUS: ADMINER
+    # Bonus: Adminer
     # Directive for every request that starts with /adminer/ and finishes with .php
     location ~ ^/adminer/.*\.php$ {
         # Check if php file exists; if not, error 404 not found
