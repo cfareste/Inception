@@ -172,8 +172,31 @@ The PID 1 process inside a container is the `ENTRYPOINT` command. If the `ENTRYP
 #### 1.2.1 What is Docker Compose? 🐙🐳:
 We have already seen what Docker is and how we can work with it. But, as we saw, working with multi-container applications quickly becomes complicated. You would need to execute several Docker commands in the right order to ensure the application runs properly. For example, if we wanted to create the mandatory part of the Inception project, with Nginx, WordPress and MariaDB using volumes and networks, we would need to create two separate networks with `docker network create`, and run `docker build` and `docker run -v` once per service, in the right order (e.g., ensuring MariaDB starts before WordPress, which depends on it), while avoiding configuration errors (e.g., mistakenly linking Nginx to MariaDB instead of WordPress). Moreover, if you want to add new services, like an FTP server, you would need to repeat all of these steps, and add new ones, and every time you want to start or stop your application, execute the same commands over and over again. One potential solution is writing a shell script to automate these commands, but this still doesn't scale well, as you would need to update the script for every newly added service, maintaining different scripts for tasks like starting or stopping the containers. <br/>
 This is where Docker Compose comes in handy. Docker Compose is a Docker container orchestration tool that lets you define and run multi-container applications in a faster and more efficient way than using only Docker. Under the hood, it's still Docker; it uses the same Docker daemon and Docker client, and the Dockerfiles, images, and every tool is the same, but Compose automates the management to solve all the issues we stated earlier. It lets you define and manage multiple services, containers, volumes and networks in a single YAML file. With a simple command, like `docker compose up`, you can set up all the services and volumes and connect the containers in the right way, or stop your application cleanly.
+# Add docker compose useful commands
 
 #### 1.2.2 The Compose file 🐙📄:
+Docker Compose's strength lies in the ability to define your entire project in a single file called a Compose file: a text file (written in the YAML format) where you define each tool you will use, along with its configuration and behavior. These definitions are called top-level elements (as their level of indentation is zero) and represent each main tool you will use for your application, such as the services, volumes, networks, and more. The preferred name for a Compose file is `compose.yaml`, though `compose.yml` is also correct. Also, `docker-compose.yaml` and `docker-compose.yml` are accepted for backward compatibility. <br/>
+In this section, we will explore every top-level element you can find inside a Compose file, except the version attribute, since it's deprecated and no longer required, and the config attribute, since it's not needed for this project. <br/>
+
+##### The `name` top-level element:
+The `name` top-level element defines the project name. It's not needed explicitly, but it's a good practice to set it. Whenever the project name property is defined, an environment variable called `COMPOSE_PROJECT_NAME` is exposed with its value so it can be expanded in the Compose file. Also, if the project name is defined, the images created by the compose commands will have this name as a prefix (e.g., every image created from a project named `inception` will be prefixed with `inception_`, and will be named something like `inception_imageName`). The name property is set as follows:
+~~~
+# Name top-level element
+name: inception
+
+# Services top-level element (which we will cover in the next section)
+services:
+
+  # Example service which echoes the project name
+  my_service:
+
+    # Use Debian as base image
+    image: Debian
+
+    # Runs echo command that expands COMPOSE_PROJECT_NAME variable to "inception"
+    command: echo "The project's name is ${COMPOSE_PROJECT_NAME}"
+~~~
+
 
 
 ## Concepts
@@ -224,6 +247,7 @@ https://docs.docker.com/get-started/docker-overview/ <br/>
 https://stackoverflow.com/questions/47150829/what-is-the-difference-between-binding-mounts-and-volumes-while-handling-persist <br/>
 https://docs.docker.com/engine/network/drivers/ <br/>
 https://github.com/krallin/tini <br/>
+https://docs.docker.com/compose/intro/compose-application-model/ <br/>
 https://github.com/antontkv/docker-and-pid1
 
 
