@@ -201,6 +201,87 @@ services:
     command: echo "The project's name is ${COMPOSE_PROJECT_NAME}"
 ~~~
 
+##### The `services` top-level element:
+The `services` top-level element defines which services your application consists of. A service is an abstract definition of a resource that can be scaled or replaced independently from other components. For example, a service could be a database server, a web server, or an ftp service. If you decide to change your web server from Nginx to Apache, it doesn't affect your database or website; its independent. A service has a container associated to it. Your application's architecture varies depending on how you distribute your services across containers: if you have all your services inside one container (e.g., the frontend and the backend of a web application), you have a monolite architecture, but if you have one container per service, then you have a microservices architecture (the one that the Inception project has). <br/>
+The `services` element have multiple attributes you can specify to configure it as you want. Here are a few examples we will use for the project:
+- `container_name`: Specifies the custom name of the associated container so it can be referenced later with that name.
+- `build`: The `build` attribute specifies how to (re)build the image of the service. It can be defined as a simple string or as a detailed context. If it's defined as a simple string (`build: path/to/context`), the string defines the path to the build context. If it's a detailed context (like a top-level element), you can specify multiple configurations, like the build context (`context: path/to/context`), the specific Dockerfile (`Dockerfile: path/to/Dockerfile`), and more. Paths should be relative; if they are absolute, they prevent the Compose file from being portable, and Docker displays a warning.
+- `volumes`: Specify the volumes the service will use. They are defined with the `volumes` top-level element.
+- `networks`: Specify the networks the service will use. They are defined with the `networks` top-level element.
+- `ports`: Specify which ports are published. The format is `ports: "HOST_PORT":"CONTAINER_PORT"`. You can specify either a single port or a range of them (e.g., `ports: "200-210","200-210"`.
+- `secrets`: Specify which Docker secrets the service will use. They are defined with the `secrets` top-level element.
+- `env_file`: Specify the path to the environment file.
+- `depends_on`: Specifies which services are meant to be build before than the actual one. For example, if WordPress needs MariaDB to be functional to work properly, in the WordPress service you would specify `depends on: mariadb`. Something to be aware of when using `depends_on` is that by default it waits for the container to be up, not the `ENTRYPOINT` to be working. This means that if MariaDB `ENTRYPOINT` command / script is slower than WordPress's, then it will fail. To prevent it, you can specify what you want to be dependent of, for example, a `healthcheck` to know when the service is properly functioning.
+- `restart`: Specifies when should the container be run. If you set `restart: no`, it will only be run once automatically. If its set to `restart: always`, everytime the containers exits (if is not stated with `docker compose`) it will be run again. This is useful to ensure everytime you boot up your host machine, your containers are run automatically.
+~~~
+# Monolite architecture example
+
+# We have one container for all our services. Even if we only declare one service, inside this container we can find:
+# - The database (for the data)
+# - WordPress (for the website)
+# - Nginx (for the web serving and request handling)
+services:
+  application:
+    container_name: application
+    build: ./requirements/application
+    volumes:
+      [...]
+    networks:
+      [...]
+    secrets:
+      [...]
+    env_file: .env
+    ports:
+      - "443:443"
+    restart: always
+~~~
+~~~
+# Miniservices architecture example
+
+# We have a different container per service. Every defined service represents a resource of our application:
+# - The database (for the data)
+# - WordPress (for the website)
+# - Nginx (for the web serving and request handling)
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    volumes:
+      [...]
+    networks:
+      [...]
+    secrets:
+      [...]
+    env_file: .env
+    restart: always
+  wordpress:
+    container_name: wordpress
+    build: requirements/wordpress
+    volumes:
+      [...]
+    networks:
+      [...]
+    secrets:
+      [...]
+    env_file: .env
+    restart: always
+    depends_on:
+      - mariadb
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements
+      dockerfile: ./nginx/Dockerfile
+    volumes:
+      [...]
+    networks:
+      [...]
+    ports:
+      - "443:443"
+    restart: always
+    depends_on:
+      - wordpress
+~~~
 
 
 ## Concepts
