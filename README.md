@@ -290,6 +290,48 @@ services:
       - wordpress
 ~~~
 
+##### The `networks` top-level element:
+This element is used to define all the networks that our application's containers will use to communicate with each other. You can either define only the network name (and use the default configuration) or define all the configuration, such as which driver to use, driver options, whether it's an external or internal network, and more. For this project, you can declare only the network name, as the default configuration works correctly for it, but you can also explicitly declare the driver (`driver: bridge` in this case) if desired. By default, Docker Compose sets up a single network for the application, and each container joins it and is reachable by other containers. Also, if no custom networks are defined for an application, Docker Compose automatically creates a default network named after the project (e.g., `inception_default`).
+~~~
+# Example of network configuration in a Compose file
+
+# Services: Database (mariadb), website (WordPress), web server (Nginx)
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    networks:
+      - backend
+  wordpress:
+    container_name: website
+    build: requirements/wordpress
+    # In this case, since WordPress needs the database information and receives requests from Nginx,
+    # the WordPress container connects to both networks
+    networks:
+      - backend
+      - frontend
+    depends_on:
+      - mariadb
+  nginx:
+    container_name: nginx
+    build: requirements/nginx
+    networks:
+      - frontend
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+
+# The networks top-level element. The bridge driver is set by default, so you can omit that line
+networks:
+  # The backend (MariaDB - WordPress) network, used for database queries
+  backend:
+    driver: bridge
+  # The frontend (WordPress - Nginx) network, used for web requests
+  frontend:
+    driver: bridge
+~~~
+
 
 ## Concepts
 ### Docker Compose
