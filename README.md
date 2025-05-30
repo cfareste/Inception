@@ -26,6 +26,7 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;[1.2 Docker Compose](#12-Docker-Compose) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.2.1 What is Docker Compose?](#121-What-is-Docker-Compose-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.2.2 The Compose file](#122-The-Compose-file-) <br/>
+&ensp;&ensp;[1.3 Inception's services](#13-Inceptions-services) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
@@ -468,12 +469,12 @@ secrets:
     file: ./secrets/website_author_password.txt
 ~~~
 
-## Concepts
-### Docker Compose
-#### What is Docker Compose
-#### The compose file
-##### Top level instructions (version, name, services, volumes, networks, configs and secrets)
-### Inception's infrastructure
+### Inception's services
+In this section, I will explain each service and program required for the Inception project, including what each service does, how it works, how they interact with each other, and other useful details.
+
+
+
+### Inception's services
 #### MariaDB
 #### PHP-FPM
 ##### Static vs Dynamic files
