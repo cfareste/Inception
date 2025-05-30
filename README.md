@@ -290,6 +290,66 @@ services:
       - wordpress
 ~~~
 
+##### The `volumes` top-level element:
+This element is used to define all the volumes that our application's containers will use to persist data. These are named volumes and can be configured using different attributes, such as the driver to use, driver options, and more. The default driver (`driver: local`) stores data on the host machine, and with the driver options you can define a named volume that acts as a bind mount under the hood. In other words, you can define a bind mount as a named volume.
+~~~
+# Example of volumes configuration in a Compose file
+
+# Services: Database (mariadb), website (WordPress), web server (Nginx)
+services:
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    # Mounts a host machine directory to the container's /var/lib/mysql directory (database files)
+    volumes:
+      - database:/var/lib/mysql
+    networks:
+      [...]
+  wordpress:
+    container_name: website
+    build: requirements/wordpress
+    # Mounts a host machine directory to the container's /var/www/html directory (dynamic website content)
+    volumes:
+      - website:/var/www/html
+    networks:
+      [...]
+    depends_on:
+      - mariadb
+  nginx:
+    container_name: nginx
+    build: requirements/nginx
+    # Mounts a host machine directory to the container's /var/www/html directory (static website content)
+    volumes:
+      - website:/var/www/html
+    networks:
+      [...]
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+
+# The volumes top-level element
+volumes:
+  # The database volume, which contains all the database tables
+  database:
+    driver: local
+    # Specifies a bind mount. These options are (more or less) equivalent to executing `mount -t type -o o device <docker_mounted_point>`:
+    # - type: Specifies the filesystem type, such as ext4, tmpfs, or others
+    # - o: Specifies the mount options
+    # - device: Specifies where to mount the directory on the host machine
+    driver_opts:
+      type: none
+      device: ./path/to/volumes_directory/database
+      o: bind
+  # The website volume, which contains all the website dynamic and static files
+  website:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./path/to/volumes_directory/website
+      o: bind
+~~~
+
 ##### The `networks` top-level element:
 This element is used to define all the networks that our application's containers will use to communicate with each other. You can either define only the network name (and use the default configuration) or define all the configuration, such as which driver to use, driver options, whether it's an external or internal network, and more. For this project, you can declare only the network name, as the default configuration works correctly for it, but you can also explicitly declare the driver (`driver: bridge` in this case) if desired. By default, Docker Compose sets up a single network for the application, and each container joins it and is reachable by other containers. Also, if no custom networks are defined for an application, Docker Compose automatically creates a default network named after the project (e.g., `inception_default`).
 ~~~
@@ -300,11 +360,15 @@ services:
   mariadb:
     container_name: mariadb
     build: requirements/mariadb
+    volumes:
+      [...]
     networks:
       - backend
   wordpress:
     container_name: website
     build: requirements/wordpress
+    volumes:
+      [...]
     # In this case, since WordPress needs the database information and receives requests from Nginx,
     # the WordPress container connects to both networks
     networks:
@@ -315,6 +379,8 @@ services:
   nginx:
     container_name: nginx
     build: requirements/nginx
+    volumes:
+      [...]
     networks:
       - frontend
     ports:
