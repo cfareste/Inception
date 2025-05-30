@@ -202,24 +202,25 @@ services:
 ~~~
 
 ##### The `services` top-level element:
-The `services` top-level element defines which services your application consists of. A service is an abstract definition of a resource that can be scaled or replaced independently from other components. For example, a service could be a database server, a web server, or an ftp service. If you decide to change your web server from Nginx to Apache, it doesn't affect your database or website; its independent. A service has a container associated to it. Your application's architecture varies depending on how you distribute your services across containers: if you have all your services inside one container (e.g., the frontend and the backend of a web application), you have a monolite architecture, but if you have one container per service, then you have a microservices architecture (the one that the Inception project has). <br/>
-The `services` element have multiple attributes you can specify to configure it as you want. Here are a few examples we will use for the project:
-- `container_name`: Specifies the custom name of the associated container so it can be referenced later with that name.
-- `build`: The `build` attribute specifies how to (re)build the image of the service. It can be defined as a simple string or as a detailed context. If it's defined as a simple string (`build: path/to/context`), the string defines the path to the build context. If it's a detailed context (like a top-level element), you can specify multiple configurations, like the build context (`context: path/to/context`), the specific Dockerfile (`Dockerfile: path/to/Dockerfile`), and more. Paths should be relative; if they are absolute, they prevent the Compose file from being portable, and Docker displays a warning.
+The `services` top-level element defines which services your application consists of. A service is an abstract definition of a resource that can be scaled or replaced independently from other components. For example, a service could be a database server, a web server, or an FTP service. If you decide to change your web server from Nginx to Apache, it doesn't affect your database or website; it's independent. A service has a container associated with it. Your application's architecture depends on how you distribute your services across containers: if you run all your services inside a single container (e.g., the frontend and the backend of a web application), you have a monolithic architecture, but if you have one container per service, then you have a microservices-based architecture (like the one used in the Inception project). <br/>
+The `services` element has multiple attributes you can specify to configure your services as needed. Here are a few examples we will use for the project:
+- `container_name`: Specifies the custom name for the associated container so it can be referenced later with that name.
+- `build`: The `build` attribute specifies how to (re)build the image of the service. It can be defined as a simple string or as a detailed context. If defined as a simple string (`build: path/to/context`), it represents the path to the build context. If it's a detailed context (like a top-level element), you can specify multiple configurations, like the build context (`context: path/to/context`), the specific Dockerfile (`dockerfile: path/to/Dockerfile`), and more. Paths should be relative; using absolute paths reduces portability and triggers a warning from Docker.
 - `volumes`: Specify the volumes the service will use. They are defined with the `volumes` top-level element.
 - `networks`: Specify the networks the service will use. They are defined with the `networks` top-level element.
-- `ports`: Specify which ports are published. The format is `ports: "HOST_PORT":"CONTAINER_PORT"`. You can specify either a single port or a range of them (e.g., `ports: "200-210","200-210"`.
+- `ports`: Specify which ports are published. The format is `ports: "HOST_PORT:CONTAINER_PORT"`. You can specify either a single port (e.g., `ports:  "80:80"`) or a range of them (e.g., `ports: "200-210:200-210"`, to expose from the port `200` to the port `210`).
 - `secrets`: Specify which Docker secrets the service will use. They are defined with the `secrets` top-level element.
 - `env_file`: Specify the path to the environment file.
-- `depends_on`: Specifies which services are meant to be build before than the actual one. For example, if WordPress needs MariaDB to be functional to work properly, in the WordPress service you would specify `depends on: mariadb`. Something to be aware of when using `depends_on` is that by default it waits for the container to be up, not the `ENTRYPOINT` to be working. This means that if MariaDB `ENTRYPOINT` command / script is slower than WordPress's, then it will fail. To prevent it, you can specify what you want to be dependent of, for example, a `healthcheck` to know when the service is properly functioning.
-- `restart`: Specifies when should the container be run. If you set `restart: no`, it will only be run once automatically. If its set to `restart: always`, everytime the containers exits (if is not stated with `docker compose`) it will be run again. This is useful to ensure everytime you boot up your host machine, your containers are run automatically.
+- `depends_on`: Specifies which services are meant to be built before the one declaring it. For example, if WordPress needs MariaDB to function properly, in the WordPress service you would specify `depends_on: mariadb`. Something to be aware of when using `depends_on` is that by default it waits for the container to start, not for its `ENTRYPOINT` to be fully ready. This means that if MariaDB `ENTRYPOINT` command or script is slower than WordPress's, then it will fail. To avoid this issue, you can define what the service should wait for, for example, a `healthcheck` to determine when the service is properly functioning and ready.
+- `restart`: Specifies when the container should be restarted. If you set `restart: no`, it will run only once automatically. If it's set to `restart: always`, every time the container exits (unless it was explicitly stopped using `docker compose stop` or `docker compose down`), it will automatically restart. This is useful to ensure every time you boot up your host machine, your containers are run automatically. <br/>
+There are other attributes, like `environment` to specify concrete environment variables, or `entrypoint` to specify a container's `ENTRYPOINT` command or script.
 ~~~
-# Monolite architecture example
+# Monolithic architecture example
 
-# We have one container for all our services. Even if we only declare one service, inside this container we can find:
-# - The database (for the data)
-# - WordPress (for the website)
-# - Nginx (for the web serving and request handling)
+# All services are combined into a single container. We only declare one service, but inside its container we can find:
+# - The database service (for the data)
+# - WordPress service (for the website)
+# - Nginx service (for the web serving and request handling)
 services:
   application:
     container_name: application
@@ -236,7 +237,7 @@ services:
     restart: always
 ~~~
 ~~~
-# Miniservices architecture example
+# Microservices-based architecture example
 
 # We have a different container per service. Every defined service represents a resource of our application:
 # - The database (for the data)
