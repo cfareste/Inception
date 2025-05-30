@@ -469,7 +469,7 @@ secrets:
     file: ./secrets/website_author_password.txt
 ~~~
 
-### Inception's services
+### 1.3 Inception's services
 In this section, I will explain each service and program required for the Inception project, including what each service does, how it works, how they interact with each other, and other useful details.
 
 
