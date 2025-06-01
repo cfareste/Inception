@@ -27,6 +27,7 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.2.1 What is Docker Compose?](#121-What-is-Docker-Compose-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.2.2 The Compose file](#122-The-Compose-file-) <br/>
 &ensp;&ensp;[1.3 Inception's services](#13-Inceptions-services) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.1 MariaDB](#131-MariaDB-%EF%B8%8F) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
