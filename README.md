@@ -472,6 +472,14 @@ secrets:
 ### 1.3 Inception's services
 In this section, I will explain each service and program required for the Inception project, including what each service does, how it works, how they interact with each other, and other useful details.
 
+#### 1.3.1 MariaDB 🦭🗂️:
+MariaDB is a popular open-source database, created by the original developers of MySQL due to licensing and distribution concerns after MySQL was acquired by Oracle, to ensure MariaDB would remain open source. MariaDB was forked from MySQL, meaning it started as a clone of MySQL and then additional features and changes were added, with the goal of continuing MySQL's development as an open-source project. <br/>
+It's a relational database, meaning its data is stored in tables with columns (e.g., a User table with ID, name, email and password columns), and those tables are related to each other with primary and foreign keys. A primary key is a table column (also known as a field) that identifies each row of a table, and must be unique. For example, in a User table, the ID column would be the primary key, as it identifies every user and is unique. A foreign key is a table field that links a table with another one, referring to the other table's primary key. Taking the last User table example, we could have an Account table with a field called `owner`, which is a foreign key that refers to the `ID` field in the `User` table, and links each account with one user. <br/>
+MariaDB is also a SQL database, meaning it uses SQL (Structured Query Language) to manage the data inside a database. Each command you run with SQL, such as selecting, creating, modifying or deleting data is called a query. For example, an SQL query would be `SELECT ID, name FROM MyDatabase.User;`, where you are selecting (reading) the `ID` and `name` fields from the table `User` inside the database `MyDatabase`. <br/>
+MariaDB is similar to Docker; it has a client-server architecture. The MariaDB server (`mariadbd`) is the daemon process that manages databases and handles client requests, while the client (`mariadb`) is a CLI program that gives the user an SQL shell (an SQL interpreter) to interact with the server via queries. The server can be on a different host machine than the client, meaning you can execute queries to a remote host. To install MariaDB using the terminal, run `apt install mariadb-server`. This will install both the server and the client, since the client is needed to interact with the server.
+
+![MariaDB client-server architecture](https://github.com/user-attachments/assets/3dc5b5e5-9cee-46a6-804a-6e562d238856)
+
 
 
 ### Inception's services
