@@ -28,9 +28,10 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.2.2 The Compose file](#122-The-Compose-file-) <br/>
 &ensp;&ensp;[1.3 Inception's services](#13-Inceptions-services) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.1 MariaDB](#131-MariaDB-%EF%B8%8F) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.2 PHP-FPM](#132-PHP-FPM-%EF%B8%8F) <br/>
 
 ## 1. Concepts
-In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how the work together, such as MariaDB, php-fpm, nginx, and more.
+In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how they work together, such as MariaDB, PHP-FPM, Nginx, and more.
 
 ### 1.1 Docker
 #### 1.1.1 What is Docker? 🐳📦:
@@ -481,16 +482,51 @@ MariaDB is similar to Docker; it has a client-server architecture. The MariaDB s
 
 ![MariaDB client-server architecture](https://github.com/user-attachments/assets/3dc5b5e5-9cee-46a6-804a-6e562d238856)
 
+#### 1.3.2 PHP-FPM ⚙️📖:
+To understand what PHP-FPM and CGIs are, we first need to understand how websites and web browsers work, and the difference between static and dynamic files. <br/>
+Web browsers only interpret HTML, CSS and Javascript to load the websites, where HTML contains the structure of the web, CSS the decorations and styles, and Javascript the logic (content manipulation, interactivity, events handling, etc.). A website's type can be either static or dynamic, and it can change depending on the context it's considered. <br/>
+On the client context (or web browser context, with the final HTML, CSS and Javascript files it interprets), a website is static if it's only composed of HTML and CSS files, and dynamic if it contains and uses Javascript to update content or interact with the backend via APIs. This is because Javascript provides dynamic functionalities, such as animations, event handling on buttons, etc., while HTML and CSS only provide the visual content without any logic underneath. <br/>
+However, in the server context, these definitions change. On the one hand, a website is static when the requested files can be directly managed by the browser (HTML, CSS, Javascript, images...), always delivering the same content to all visitors (e.g., an `index.html`). On the other hand, a website is dynamic if some of the requested files need to be translated first so that the browser can interpret them, generating content on-the-fly (using server-side code or databases). For example, if the user requests the file `index.php`, with the following content:
+~~~
+// PLEASE NOTE THAT THIS IS AN EXAMPLE, THE CODE IS INCOMPLETE
+
+// HTML body
+<body>
+    // Main title
+    <h1>
+        // Static message, always with the same content
+        Welcome back
+        // Dynamic content. It depends on the following logic:
+        <?php
+            // Import the website cookies and get the user role
+            global $_COOKIE;
+            $role = getUserRole($_COOKIE["user_name"]);
+
+            // If the user is admin, print "admin!"; else, print "normal user!"
+            if ($role == "admin")
+                echo "admin!";
+            else
+                echo "normal user!";
+        ?>
+    </h1>
+</body>
+~~~
+The application's backend should first interpret the PHP code to translate it to pure static HTML (as the browser can't interpret PHP), and then send it to the browser to load the new static page, providing personalized and interactive content (e.g., based on user data, like their role). <br/>
+
+![Static vs dynamic websites](https://github.com/user-attachments/assets/10289d04-3f66-455d-a395-44b346ce10ee)
+
+The programs that interpret dynamic files are called `CGI scripts`. `CGI` (Common Gateway Interface) is an old protocol that these scripts use to communicate with the web server and handle its requests. The `CGI scripts` are language-independent, meaning they can be written in any language, such as PHP, Python, C / C++ or even Bash. <br/>
+When a web server receives a request for a dynamic file (e.g., `index.php`), it creates a child process that executes the `CGI script` (in this case, a `PHP-CGI` script), and passes the necessary environment variables to it, such as the user's cookies and session, the script filename (the requested file path), and more. Then, the `CGI script` sends its response back to the web server, and the web server back to the browser, which interprets the static content created by the script. <br/>
+
+![Nginx and CGI workflow](https://github.com/user-attachments/assets/47026a13-8477-4d41-998d-270eb70c937c)
+
+However, the usage of basic CGI scripts doesn't scale well, as creating new child processes every time you receive a dynamic file request is really resource-consuming, causing servers hosting high-traffic websites to break or to perform poorly. To avoid this issue, a new protocol called `FastCGI` was developed. This new protocol is based on the CGI protocol, but with a key difference: it allows implementations to have a pool of processes (called workers) that are created from the start and kept running persistently, reusing them multiple times for handling incoming requests. The management and behavior of the workers' pool depends on the program implementing it. In other words, a simple CGI script executes the dynamic file once per request to produce a response, and must be executed by the web server, while a `FastCGI` program is executed only once, independently from the web server, with a pool of persistent child processes that handle multiple requests. <br/>
+`PHP-FPM` (PHP FastCGI Process Manager) is a highly-configurable program that implements the `FastCGI` protocol, and allows you to configure the pool's size, idle workers behavior, the maximum number of active child processes, and much more. When `PHP-FPM` receives a request from the web-server, it tries to send it to a worker in the pool. If all of them are busy, it creates a new temporary worker that will only handle the request (it may be reused or terminated, depending of the configuration) if there are fewer than `max_children` created (defined in the configuration file). If there are more than that, it waits until it can handle it (or timeout). <br/>
+
+![Nginx and PHP-FPM workflow](https://github.com/user-attachments/assets/cd2e1d1f-4024-4a9d-a22f-1648a1063297)
 
 
 ### Inception's services
-#### MariaDB
-#### PHP-FPM
-##### Static vs Dynamic files
-##### What is a CGI
-##### How does a CGI work
-##### Differences between CGI and FastCGI
-##### What is PHP-FPM
 #### Wordpress
 ##### How does wordpress work with a CGI (PHP-FPM)
 #### Nginx + TLS
