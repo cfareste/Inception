@@ -29,6 +29,8 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;[1.3 Inception's services](#13-Inceptions-services) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.1 MariaDB](#131-MariaDB-%EF%B8%8F) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.2 PHP-FPM](#132-PHP-FPM-%EF%B8%8F) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.3 WordPress](#133-WordPress-) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.4 Nginx and TLS](#133-Nginx-and-TLS-) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how they work together, such as MariaDB, PHP-FPM, Nginx, and more.
@@ -532,14 +534,21 @@ However, WordPress' PHP scripts alone are not sufficient, as the browser cannot 
 
 ![WordPress themes operations](https://github.com/user-attachments/assets/ec914255-a59e-4efc-9e85-5c27f911c430)
 
+#### 1.3.4 Nginx and TLS ↪️🔐:
+Nginx (pronounced `Engine X`) is an HTTP/HTTPS web server that is used for serving requested files of a website, though it can also be used as a reverse proxy or proxy server, load balancer, etc. When a user requests a file from the server (e.g., using `curl https://my.web.com/index.html` or a web browser like Mozilla), Nginx accepts the incoming connection, parses the request HTTP/HTTPS headers and body, and sends a response back with the appropriate HTTP status code. For example, if the requested file doesn't exist, Nginx would send a response with the status code `404` (Not Found). <br/>
+By default, Nginx sends the existing files directly, without interpreting their content. This means that if a user requests a dynamic file (e.g., `index.php`), by default Nginx would return the raw file contents to the client, which is a significant security risk, as it would reveal the source code of the website. To avoid this, you can configure Nginx to forward these requests to a CGI/FastCGI script (e.g., PHP-FPM). <br/>
+An `HTTP` (HyperText Transfer Protocol) communication mainly consists of two different parts: the headers and the body. The headers contain the request or response meta-data, such as the method (GET, POST, DELETE...), the content length and type, the user's cookies and session information, etc. The request's or response's body contains the data that the sender wants to send to the receiver. For example, when a user wants to log in on a website, the client would send a POST request with the login information in its body (e.g., the username and password), and would receive an according response from the server. <br/>
+
+![HTTP request / response](https://github.com/user-attachments/assets/501dd411-8bac-4e55-8e34-82747cc094bc)
+
+However, `HTTP` requests and responses are sent as plain text, so anybody that intercepts the packets (with a MITM attack) could read the data. This is where `HTTPS` (HyperText Transfer Protocol Secure) and `TLS` (Transport Layer Security) comes in handy. `HTTPS` has the same data format as `HTTP` (Headers and body), but it encrypts the data exchanged between the sender and the receiver, preventing unauthorized parties from reading or accessing its contents. To encrypt the data, it uses the `TLS` protocol, the successor to the `SSL` protocol (Secure Sockets Layer), which was deprecated in 2015 following version 3.0 due to several known vulnerabilities. <br/>
+These protocols use asymmetric cryptography (a public/private key pair) to securely exchange session keys, which are then used for symmetric encryption and decryption of the data. When a client tries to connect to a server, the secure communication begins with a `TLS handshake` process, where the client and the server use their public/private key pair to agree on session keys, which they will use to encrypt and decrypt the data. The `TLS handshake` process depends on the `TLS` version; the `TLSv1.2` handshake takes more steps than `TLSv1.3`, and can be more insecure, since some insecure cipher suites (the encryption algorithms) are allowed, such as RSA-based key exchange. To use `HTTPS` and `TLS` encryption, your website must have a `TLS` certificate that verifies the server's identity and proves that it's truly who it says it is. These certificates are provided by security entities called Certificate Authorities (CA), such as DigiCert or Let's Encrypt. Browsers validate the certificate's authenticity by checking its trust chain up to a recognized Certificate Authority.”<br/>
+In summary, Nginx is primarily a web server designed to serve files in response to client requests. It uses `HTTP` and `HTTPS`, protocols that define the format of the data sent between a web server and a client. `HTTP` is insecure, as the information is sent as plain text, and `HTTPS` encrypts the data using the `TLS` protocol. To see more information about how `TLS` and the `TLS handshake` works, see [4. Sources](#4-Sources).
+
+![HTTP vs HTTPS](https://github.com/user-attachments/assets/5d471043-d8d4-48fa-b201-4ca5f05515c0)
+
+
 ### Inception's services
-#### Wordpress
-##### How does wordpress work with a CGI (PHP-FPM)
-#### Nginx + TLS
-##### What is Nginx and how does it work
-##### What is SSL and TLS
-##### How does it work
-##### Things you need to know (RSA)
 #### Redis
 ##### What means to use cache in a website
 ##### Why is useful to use cache in a website
