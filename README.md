@@ -525,6 +525,12 @@ However, the usage of basic CGI scripts doesn't scale well, as creating new chil
 
 ![Nginx and PHP-FPM workflow](https://github.com/user-attachments/assets/cd2e1d1f-4024-4a9d-a22f-1648a1063297)
 
+#### 1.3.3 WordPress 📄📥:
+WordPress is a CMS (Content Management System), a web application that simplifies content creation and management. It allows the user to create any type of dynamic website (though it was originally designed for blogs), offering features such as database integration (typically MySQL or MariaDB), admin panels, user role management, plugin support (third-party extensions that add functionality, such as e-commerce via the WooCommerce plugin), etc. Users can manage content, appearance, and settings through an admin dashboard. When a page is requested, WordPress queries the database to retrieve the corresponding content, which is then processed through the PHP scripts and templates, generating the final HTML. <br/>
+Under the hood, WordPress is just a collection of PHP scripts that generate dynamic website pages based on a specific theme. This means that the content of the pages is dynamic, since it changes depending on multiple factors, such as the user role, the requested content, etc., but the appearance across all the pages will remain the same, regardless of the page content (e.g., a contact page and a blog page on the same website will share the same appearance). To achieve this, WordPress uses themes, a set of templates that define both the appearance and structure of website pages, using predefined HTML, CSS, and logic to render different types of content consistently. You can install any theme that suits your needs. <br/>
+However, WordPress' PHP scripts alone are not sufficient, as the browser cannot interpret them directly. That's the reason why `FastCGI` programs and web servers are also needed; a `FastCGI` program (like PHP-FPM) to interpret and execute the scripts, and a web server (like Nginx) to forward browser requests to the `FastCGI` program.
+
+![WordPress themes operations](https://github.com/user-attachments/assets/ec914255-a59e-4efc-9e85-5c27f911c430)
 
 ### Inception's services
 #### Wordpress
@@ -534,7 +540,6 @@ However, the usage of basic CGI scripts doesn't scale well, as creating new chil
 ##### What is SSL and TLS
 ##### How does it work
 ##### Things you need to know (RSA)
-#### Adminer
 #### Redis
 ##### What means to use cache in a website
 ##### Why is useful to use cache in a website
@@ -542,6 +547,7 @@ However, the usage of basic CGI scripts doesn't scale well, as creating new chil
 #### FTP server
 ##### What is FTP
 ##### How does FTP work
+#### Adminer
 ## Walkthrough
 ### MariaDB
 ### Starting the compose file
