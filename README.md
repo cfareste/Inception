@@ -30,7 +30,7 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.3.1 MariaDB](#131-MariaDB-%EF%B8%8F) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.2 PHP-FPM](#132-PHP-FPM-%EF%B8%8F) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.3 WordPress](#133-WordPress-) <br/>
-&ensp;&ensp;&ensp;&ensp;[1.3.4 Nginx and TLS](#133-Nginx-and-TLS-) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.4 Nginx and TLS](#134-Nginx-and-TLS-%EF%B8%8F) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how they work together, such as MariaDB, PHP-FPM, Nginx, and more.
