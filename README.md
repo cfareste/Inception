@@ -31,6 +31,7 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.3.2 PHP-FPM](#132-PHP-FPM-%EF%B8%8F) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.3 WordPress](#133-WordPress-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.4 Nginx and TLS](#134-Nginx-and-TLS-%EF%B8%8F) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.5 Redis and Redis Object Cache](#135-Redis-and-Redis-Object-Cache-) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how they work together, such as MariaDB, PHP-FPM, Nginx, and more.
@@ -547,12 +548,15 @@ In summary, Nginx is primarily a web server designed to serve files in response 
 
 ![HTTP vs HTTPS](https://github.com/user-attachments/assets/5d471043-d8d4-48fa-b201-4ca5f05515c0)
 
+#### 1.3.5 Redis and Redis Object Cache ⚡📝:
+Redis is an open-source database popular for its high read and write performance, since by default it stores the data in the RAM instead of the disk. This fact makes the data access much faster than a conventional database, with the downside that the data is volatile, as it's lost whenever the machine is shut down (although it can be configured to persist data). Redis is a non-relational and NoSQL database; the data is not stored as tables, but in key-value pairs, and it does not support SQL queries. It's mostly used in scenarios where speed is more important than data persistence, and for application cache (temporary data stored to improve loading times). <br/>
+The pages of a website can be cached in different ways to speed up loading times. The simplest way to do it is caching static files, as its contents never change. Most browsers have a built-in caching system for them, improving speed after they are loaded the first time, but other web applications or web servers like WordPress or Nginx can manage static file caching as well. For example, web servers can cache the files requested, to avoid having to process them multiple times, as the content won't change. This allows the server to send future responses significantly faster. <br/>
+Dynamic files cannot be cached the same way. Since their content is generated on-the-fly, any slight change would mean that the cached content is no longer useful. However, since building dynamic pages usually means to fetch data from a database, it's possible to cache the result of those queries. In dynamic page generation, the slowest step is usually retrieving data from the database, as it requires communicating with the server, sending a query, waiting for a response, and building the page with it. When caching the database query, the next pages that are built using the same data will only need to read the data and build the page, making the process much faster. <br/>
+This is where Redis Object Cache can help us. Redis Object Cache is a WordPress plugin that replaces WordPress's default cache with a much faster and more powerful one using Redis. The default WordPress's cache is really limited, since the content of dynamic pages is constantly changing. This plugin uses Redis cache to save the results of database queries in memory, reusing it in future requests and speeding up page generation. A Redis service must be running in order to use Redis Object Cache, either on the same host machine or on a remote server.
+
+![Redis Object Cache workflow](https://github.com/user-attachments/assets/7d0f71ae-e8fb-4e49-9987-61e9596d4cc6)
 
 ### Inception's services
-#### Redis
-##### What means to use cache in a website
-##### Why is useful to use cache in a website
-##### What is redis object cache
 #### FTP server
 ##### What is FTP
 ##### How does FTP work
