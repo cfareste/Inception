@@ -32,6 +32,7 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.3.3 WordPress](#133-WordPress-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.4 Nginx and TLS](#134-Nginx-and-TLS-%EF%B8%8F) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.5 Redis and Redis Object Cache](#135-Redis-and-Redis-Object-Cache-) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.6 FTP server](#136-FTP-server-) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how they work together, such as MariaDB, PHP-FPM, Nginx, and more.
@@ -556,10 +557,33 @@ This is where Redis Object Cache can help us. Redis Object Cache is a WordPress 
 
 ![Redis Object Cache workflow](https://github.com/user-attachments/assets/7d0f71ae-e8fb-4e49-9987-61e9596d4cc6)
 
+#### 1.3.6 FTP server 📨📬:
+`FTP` (File Transfer Protocol) is an old communication protocol used to transfer and manage files between devices over a network. An `FTP server` is a service that allows users to access, upload, download and manage files using the `FTP` protocol. The user connects to the server using an `FTP client`, such as FileZilla or `ftp` command-line tool. Using a login and password, it can transfer files from one machine to another, or manage files on the remote server (e.g., create, rename, delete or move operations). <br/>
+Unlike other protocols, `FTP` uses two different communication channels: the command channel and the data channel. The command channel is persistent, and is used to send the `FTP` command the user wants to execute on the server (e.g., `LIST` to list the working directory, `USER` and `PASS` to specify the user and the password, `RETR` and `STOR` to retrieve and store a file, etc.). The server sends a response based on the execution result, similar to `HTTP`; for example, `200 OK`, `230 Login successful`, `226 Transfer complete`, etc. The data channel is temporary, and is only used when the specified command requires to move data. For example, if a user sends the `STOR` command to upload a file to the remote server, a new data channel is created to transfer the file contents through it, and it is closed when the transfer is finished. <br/>
+The client always establishes the command channel connection, normally on the server's port 21, but the establishment of the data channel depends on the mode: either the server connects to the client (active mode) or the client connects to the server (passive mode).
+- **Active mode**: In this mode, the client creates the command channel, while the server creates the data channel. The client uses an ephemeral port (a temporary port, usually in the range of 49152 to 65535) on its side to initiate the command channel to the server's port 21, and receives a connection from the server for the data channel in a different ephemeral port, which is established from the server's port 20. Here are the simplified steps to transfer data in active mode:
+  1. The client establishes the command channel connection.
+  2. The server sends the response back on that channel (`220 Welcome to FTP`).
+  3. The client authenticates itself with `USER` and `PASS` commands, and the server sends a response (e.g., `530 Login incorrect` if failed).
+  4. When the client wants to transfer data, it sends a `PORT` command specifying its IP and an available port for the data channel (active mode).
+  5. The server establishes the data channel connection to the specified client port.
+  6. When established, every time the user sends a command through the command channel (e.g., `LIST`, `RETR` or `STOR`), the server receives or sends data on the data channel.
+- **Passive mode**: In this mode, the client creates both the command and data channels. The client establishes (by default) the command channel to the server's port 21, but for the data channel the server indicates a range of ports that the client can connect to. Here are the simplified steps to transfer data in passive mode:
+  1. The client establishes the command channel connection.
+  2. The server sends the response back on that channel (`220 Welcome to FTP`).
+  3. The client authenticates itself with `USER` and `PASS` commands, and the server sends a response (e.g., `530 Login incorrect` if failed).
+  4. The client requests passive mode with the `PASV` command.
+  5. The server sends a response with `227 Entering Passive Mode` and specifies its IP and an available port the client can use to establish the data channel (passive mode).
+  6. The client establishes the data channel to the specified port.
+  7. When established, every time the user sends a command through the command channel (e.g., `LIST`, `RETR` or `STOR`), the server receives or sends data on the data channel.
+
+For both modes, the client uses ephemeral ports to establish both the command and data channels connections. On passive mode, the server has a range of ports that can be used, and informs the client of one of them on every `PASV` response. <br/>
+The active mode was the only mode used at the beginning. As systems evolved, some issues with this mode began to appear, such as problems with NAT (Network Address Translation) and firewalls (the server couldn't establish the data channel connection because the client had a firewall enabled). This is the reason why passive mode was created; the client creates both channels, and the server simply indicates which ports are available for data connections. <br/>
+Other modern protocols, such as `HTTP` or `HTTPS`, only use one channel, combining commands and data in the same request/response, where headers define the operation and the body carries the data. In other words, the `HTTP` method and data are sent together over a single connection, with no separation between command and data channels, in a single request/response. This is one of the reasons why `FTP` has gradually fallen out of use.
+
+![Active vs Passive mode](https://github.com/user-attachments/assets/0afd1fe3-078d-42e6-8f7f-4b7a37664860)
+
 ### Inception's services
-#### FTP server
-##### What is FTP
-##### How does FTP work
 #### Adminer
 ## Walkthrough
 ### MariaDB
