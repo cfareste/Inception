@@ -617,15 +617,15 @@ This is where Redis Object Cache can help us. Redis Object Cache is a WordPress 
 
 Unlike other protocols, `FTP` uses two different communication channels: the command channel and the data channel. The command channel is persistent, and is used to send the `FTP` command the user wants to execute on the server (e.g., `LIST` to list the working directory, `USER` and `PASS` to specify the user and the password, `RETR` and `STOR` to retrieve and store a file, etc.). The server sends a response based on the execution result, similar to `HTTP`; for example, `200 OK`, `230 Login successful`, `226 Transfer complete`, etc. The data channel is temporary, and is only used when the specified command requires to move data. For example, if a user sends the `STOR` command to upload a file to the remote server, a new data channel is created to transfer the file contents through it, and it is closed when the transfer is finished.
 
-The client always establishes the command channel connection, normally on the server's port 21, but the establishment of the data channel depends on the mode: either the server connects to the client (active mode) or the client connects to the server (passive mode).
-- **Active mode**: In this mode, the client creates the command channel, while the server creates the data channel. The client uses an ephemeral port (a temporary port, usually in the range of 49152 to 65535) on its side to initiate the command channel to the server's port 21, and receives a connection from the server for the data channel in a different ephemeral port, which is established from the server's port 20. Here are the simplified steps to transfer data in active mode:
+The client always establishes the command channel connection, normally on the server's port (SP) 21, but the establishment of the data channel depends on the mode: either the server connects to the client (active mode) or the client connects to the server (passive mode).
+- **Active mode**: In this mode, the client creates the command channel, while the server creates the data channel. The client uses an ephemeral port (a temporary port, usually in the range of 49152 to 65535) on its side to initiate the command channel to the SP 21, and receives a connection from the server for the data channel in a different ephemeral port, which is established from the SP 20. Here are the simplified steps to transfer data in active mode:
   1. The client establishes the command channel connection.
   2. The server sends the response back on that channel (`220 Welcome to FTP`).
   3. The client authenticates itself with `USER` and `PASS` commands, and the server sends a response (e.g., `530 Login incorrect` if failed).
   4. When the client wants to transfer data, it sends a `PORT` command specifying its IP and an available port for the data channel (active mode).
   5. The server establishes the data channel connection to the specified client port.
   6. When established, every time the user sends a command through the command channel (e.g., `LIST`, `RETR` or `STOR`), the server receives or sends data on the data channel.
-- **Passive mode**: In this mode, the client creates both the command and data channels. The client establishes (by default) the command channel to the server's port 21, but for the data channel the server indicates a range of ports that the client can connect to. Here are the simplified steps to transfer data in passive mode:
+- **Passive mode**: In this mode, the client creates both the command and data channels. The client establishes (by default) the command channel to the SP 21, but for the data channel the server indicates a range of ports that the client can connect to. Here are the simplified steps to transfer data in passive mode:
   1. The client establishes the command channel connection.
   2. The server sends the response back on that channel (`220 Welcome to FTP`).
   3. The client authenticates itself with `USER` and `PASS` commands, and the server sends a response (e.g., `530 Login incorrect` if failed).
@@ -642,7 +642,7 @@ Other modern protocols, such as `HTTP` or `HTTPS`, only use one channel, combini
 
 `FTP` clients normally provide a more user-friendly interface to use compared to interacting directly with raw `FTP` commands (`LIST`, `RETR`, `STOR`, etc.). For example, FileZilla provides a GUI that is really easy to understand and use, and the `ftp` command-line tool interprets commands similar to those used in `bash`, and translates them into their corresponding `FTP` commands (e.g., executing `put file.txt` sends a `STOR` command to upload the file, and `ls` sends a `LIST` command).
 
-![Active vs Passive mode](https://github.com/user-attachments/assets/0afd1fe3-078d-42e6-8f7f-4b7a37664860)
+![Active vs Passive mode](https://github.com/user-attachments/assets/fae4056a-57d0-43a7-935f-01961ee3f005)
 
 #### 1.3.7 Adminer 👁️🗃️:
 Adminer is a lightweight, full-featured database management tool implemented in a single PHP file. It provides various features such as connecting to databases, visualizing data, and managing database content. Under the hood, it's quite similar to WordPress, as it's also a PHP file that generates dynamic pages and provides a web-based interface to interact with a database. Since it's a single PHP file, it's lightweight and very fast. It's a good alternative to phpMyAdmin, which is heavier and requires installation. Adminer, on the other hand, only requires placing the file on the server.
