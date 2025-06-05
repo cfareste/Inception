@@ -33,6 +33,8 @@ This is the project's infrastructure that we will achieve at the end of the proj
 &ensp;&ensp;&ensp;&ensp;[1.3.4 Nginx and TLS](#134-Nginx-and-TLS-%EF%B8%8F) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.5 Redis and Redis Object Cache](#135-Redis-and-Redis-Object-Cache-) <br/>
 &ensp;&ensp;&ensp;&ensp;[1.3.6 FTP server](#136-FTP-server-) <br/>
+&ensp;&ensp;&ensp;&ensp;[1.3.7 Adminer](#137-Adminer-%EF%B8%8F%EF%B8%8F) <br/>
+[2. Walkthrough](#2-Walkthrough) <br/>
 
 ## 1. Concepts
 In this section, you will learn all the key concepts to face this project. You will find information and explanations about Docker, Docker Compose, and all the services you need to set up and how they work together, such as MariaDB, PHP-FPM, Nginx, and more.
@@ -584,9 +586,13 @@ Other modern protocols, such as `HTTP` or `HTTPS`, only use one channel, combini
 
 ![Active vs Passive mode](https://github.com/user-attachments/assets/0afd1fe3-078d-42e6-8f7f-4b7a37664860)
 
-### Inception's services
-#### Adminer
-## Walkthrough
+#### 1.3.7 Adminer 👁️🗃️:
+Adminer is a lightweight, full-featured database management tool implemented in a single PHP file. It provides various features such as connecting to databases, visualizing data, and managing database content. Under the hood, it's quite similar to WordPress, as it's also a PHP file that generates dynamic pages and provides a web-based interface to interact with a database. Since it's a single PHP file, it's lightweight and very fast. It's a good alternative to phpMyAdmin, which is heavier and requires installation. Adminer, on the other hand, only requires placing the file on the server. <br/>
+However, since Adminer is a dynamic file, a CGI script or FastCGI program (e.g., `PHP-FPM`) is required to run it, and a web server like Nginx is needed to handle the PHP file request and forward it to the PHP backend. <br/>
+Adminer supports the most popular relational database engines, such as MySQL, MariaDB, and PostgreSQL. Some relational databases, like Oracle, may also require specific configurations or plugins. Support for non-relational databases like MongoDB is also possible through plugins. <br/>
+In the context of Docker-based projects, Adminer is used as a lightweight alternative to phpMyAdmin, and can be run as a standalone container, as it only requires a `PHP-FPM` process to interpret the file and a web server to serve it.
+
+## 2. Walkthrough
 ### MariaDB
 ### Starting the compose file
 ### Wordpress and php-fpm
