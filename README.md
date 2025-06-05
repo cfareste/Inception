@@ -1,16 +1,16 @@
 # Inception
 ### A 42-school project designated to create an application infrastructure using Docker and Docker compose
-In this essay, I wrote down a walkthrough of the Inception project; an exercise focused on building a modular application using Docker and Docker Compose. The goal of the project is to deepen your understanding of containerization by setting up an environment composed of several services.
+In this essay, I wrote down a full documentation of the Inception project; an exercise focused on building a modular application using Docker and Docker Compose. The goal of the project is to deepen your understanding of containerization by setting up an environment composed of several services.
 
-This document serves as a complete guide, walkthrough and documentation about the project, including:
+This paper serves as a complete documentation about the project, including:
 - Explanations of the key theoretical concepts needed to solve the project.
-- Step-by-step instructions to set up each component of the infrastructure.
-- All the project bonuses and their solutions / explanations.
-- Errors encountered during the implementation, and their solution.
+- My step-by-step journey to set up each component of the infrastructure.
+- All the project bonuses and their explanations.
+- Errors encountered during my journey, and their explanation.
 - All external resources that helped resolve the project.
 - Useful tips to complete the project and troubleshoot it.
 
-Whether you are just starting the project or looking to set up some trobulesome service, you can find the solution here. <br/>
+Whether you are just starting the project or looking to set up some trobulesome service, you can find the documentation here. <br/>
 This is the project's infrastructure that we will achieve at the end of the project:
 
 ![Inception infrastructure](https://github.com/user-attachments/assets/8177d9a1-82d8-4e28-8e48-d02189a92a91)
